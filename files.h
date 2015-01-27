@@ -33,27 +33,29 @@ namespace dsptl
 	@tparam Type Conatiner in which the samples are stored
 	------------------------------------------------------------------------------*/
 	template<class Container>
-	void saveBinarySamples(Container & in, std::ofstream & os)
-	{
-		os.write(reinterpret_cast<char *>(in.data()), in.size() * sizeof(Container::value_type));
+	void saveBinarySamples(const Container & in, std::ofstream & os)
+	{		
+		os.write(reinterpret_cast<const char *>(in.data()), in.size() * sizeof(Container::value_type));
 	}
 
 	/*-----------------------------------------------------------------------------
 	Saves the vector data in the specified file as binary data
 
-	@tparam Type Conatiner in which the samples are stored
+	@tparam Type Container in which the samples are stored
 	------------------------------------------------------------------------------*/
-	template<class Type>
-	void saveBinarySamples(const std::vector<Type> & in, std::ofstream & os)
+#ifdef UNDEFINED
+	template<class Container, class Type>
+	void saveBinarySamples(const Container<std::complex<Type> > & in, std::ofstream & os)
 	{
 		os.write(reinterpret_cast<char *>in.data(), in.size() * sizeof(Type));
 	}
-
+#endif
 	/*-----------------------------------------------------------------------------
 	Saves the vector data in the specified file as ASCII data
 
 	@tparam Type Vakues stored in the container
 	------------------------------------------------------------------------------*/
+#ifdef UNDEFINED
 	template<class Type>
 	void saveAsciiSamples(const std::vector<Type> & in, std::ofstream & os)
 	{
@@ -63,7 +65,7 @@ namespace dsptl
 			os << *it << '\n';
 		}
 	}
-
+#endif
 	/*-----------------------------------------------------------------------------
 	Saves the vector data in the specified file as ASCII data
 
@@ -78,6 +80,22 @@ namespace dsptl
 			os << *it << '\n';
 		}
 	}
+
+	/*-----------------------------------------------------------------------------
+	Saves the vector data in the specified file as ASCII data
+
+	@tparam Type Values stored in the container
+	------------------------------------------------------------------------------*/
+	template<class Type, template<class> class Container>
+	void saveAsciiSamples(const Container<typename std::complex<Type> > & in, std::ofstream & os)
+	{/*
+		Container::const_iterator it;
+		for (it = in.cbegin(); it != in.cend(); ++it)
+		{
+			os << *it.real() << '\n' << *it.imag() << '\n';
+		}*/
+	}
+
 
 } // End of namespace
 
