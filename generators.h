@@ -17,7 +17,7 @@ Class member function: functionMember
 #include <cassert>
 #include <vector>
 #include <complex>
-
+#include <cmath>
 
 // Uncomment the following line to include the C++ specific syntax
 //#define CPLUSPLUS11
@@ -100,7 +100,6 @@ namespace dsptl
 		double phase;  //radians
 	};
 
-	
 
 
 } // End of namespace
