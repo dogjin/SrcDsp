@@ -47,10 +47,17 @@ public:
 	FilterUpsamplingFir(const std::vector<CoefType> &firCoeff);
 	// This function is called for each iteration of the filtering process
 	void step(const std::vector<InType> & signal, std::vector<OutType> & filteredSignal);
+	// Reset the internal counters and buffers
+	void reset()
+	{
+		top = 0;
+		for (size_t index = 0; index < buffer.size(); ++index)
+			buffer[index] = InType();
+	}
 	
 private:
 	std::vector<CoefType> coeff;		///< Coefficients
-	std::vector<InternalType> buffer;  	///< History buffer
+	std::vector<InType> buffer;  	///< History buffer
 	unsigned top; 				///< Current insertion point in the history buffer 
 };
 
@@ -85,7 +92,7 @@ The algorithm uses an internal buffer with a length equal to the number of coeff
 divided by the upsampling ratio \n
 The current input value is inserted in the buffer at the correct location, then the convolution
 is computed. The history buffer is processed with  a stride of 1 while the
-coefficeint buffer is processed with a stride of L\n
+coefficient buffer is processed with a stride of L\n
 
 The user must make sure that the internal type is large enough to contain the
 accumulated sum of the convolution operation\n
@@ -121,7 +128,7 @@ void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const
 		for (size_t offset = 0; offset < L; ++offset)
 		{
 			n = offset;
-			y = OutType();
+			y = InternalType();
 
 			// Process samples before and including Top
 			for(int k = top; k >= 0; k--, n+= L)
@@ -129,12 +136,12 @@ void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const
 				y += coeff[n] * buffer[k];
 			}
 			// Process samples after Top
-			for(unsigned k = inputSize-1 ; k > top; k--, n+= L)
+			for(unsigned k = histSize-1 ; k > top; k--, n+= L)
 			{
 				y += coeff[n]* buffer[k];
 			}
 
-			filteredSignal[L*j + offset] = y;
+			filteredSignal[L*j + offset] = static_cast<OutType>(y);
 		}
 		top++;
 		if(top >= histSize) top = 0;

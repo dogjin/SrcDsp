@@ -31,6 +31,9 @@ namespace dsptl
 
 	@tparam OutType Type of the output signal
 
+	@param frequency Sinewave frequency in rad/sample
+	@param amplitude Peak amplitude of the sinewave
+
 	The computation are done internally as double and converted to the desired type
 	with the desired amplitude\n
 	The class has a specialization for the complex output type

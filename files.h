@@ -51,22 +51,13 @@ namespace dsptl
 	}
 	
 #endif
-	/*-----------------------------------------------------------------------------
-	Saves the vector data in the specified file as ASCII data
 
-	@tparam Type Vakues stored in the container
-	------------------------------------------------------------------------------*/
-#ifdef UNDEFINED
-	template<class Type>
-	void saveAsciiSamples(const std::vector<Type> & in, std::ofstream & os)
-	{
-		typename std::vector<Type>::const_iterator it;
-		for (it = in.cbegin(); it != in.cend(); ++it)
-		{
-			os << *it << '\n';
-		}
-	}
-#endif
+
+
+
+
+
+
 	/*-----------------------------------------------------------------------------
 	Saves the vector data in the specified file as ASCII data
 
@@ -79,6 +70,27 @@ namespace dsptl
 		for (it = in.cbegin(); it != in.cend(); ++it)
 		{
 			os << *it << '\n';
+		}
+	}
+
+	void saveAsciiSamples(const std::vector<int8_t> & in, std::ofstream & os)
+	{
+		std::vector<int8_t>::const_iterator it;
+		for (it = in.cbegin(); it != in.cend(); ++it)
+		{
+			// Forces the interpretation as a number not as a character
+			os << static_cast<int>(*it) << '\n';
+		}
+	}
+
+
+	void saveAsciiSamples(const std::vector<std::complex<int8_t> > & in, std::ofstream & os)
+	{
+		std::vector<std::complex<int8_t> >::const_iterator it;
+		for (it = in.cbegin(); it != in.cend(); ++it)
+		{
+			// Forces the interpretation as a number not as a character
+			os << '(' << static_cast<int>(it->real()) << ',' << static_cast<int>(it->imag()) << ')' << '\n';
 		}
 	}
 
