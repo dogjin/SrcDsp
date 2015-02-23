@@ -34,6 +34,14 @@ OBJ_BT = $(patsubst %, $(OBJDIR)/%, $(_OBJ_BT))
 buffers_test:$(OBJ_BT) 	
 	$(CC) -g -L $(LIBDIR)  -o $@ $^  $(LINKFLAGS) $(LIBS)
 
+############## BUFFERS INTERACTIVE TEST
+
+_OBJ_BT = buffers_interactive.o
+OBJ_BT = $(patsubst %, $(OBJDIR)/%, $(_OBJ_BT))
+
+buffers_itest:$(OBJ_BT) 	
+	$(CC) -g -L $(LIBDIR)  -o $@ $^  $(LINKFLAGS) $(LIBS)
+
 ############### CLEAN UP
 
 .PHONY: clean
