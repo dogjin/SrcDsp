@@ -72,8 +72,15 @@ namespace dsptl
 		{
 			// 
 			history[top] = in[index];
-			// We iterate 
-			for (size_t k = 0; )
+			// We iterate
+			for (size_t k = top, size_t j = 0 ; k>=0; k-=S, --j)
+			{
+				result = history[k] * coeffs[j];
+			}
+			for (size_t k = top + , size_t j = 0; k >= 0; k -= S, --j)
+			{
+				result = history[k] * coeffs[j];
+			}
 
 
 		}
