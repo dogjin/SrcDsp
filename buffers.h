@@ -110,6 +110,7 @@ void FifoWithTimeTrack<T,N>::write(std::vector<T> & in)
 	assert(inSize < N);
 
 	// The data copying is not in the critical section because
+	// The data copying is not in the critical section because
 	// it is assumed that different sections of the vector are
 	// accessed by the different threads
 	if(inSize <= upToTop)
@@ -191,8 +192,8 @@ void FifoWithTimeTrack<T,N>::dumpInfo(bool dumpData)
 	size_t index = 0;
 	if (dumpData)
 	{
-		for (auto& elt:storage)
-			std::cout << "index: " << index++ << " Value: " << elt << '\n';
+		for (auto it = storage.begin();it != storage.end(); ++it)
+			std::cout << "index: " << index++ << " Value: " << *it << '\n';
 	}
 
 	pthread_mutex_unlock(&mx);
@@ -315,4 +316,8 @@ size_t  FifoWithTimeTrack<T,N>::count()
 
 } // End of dsptl namespace
 
+
 #endif
+
+
+
