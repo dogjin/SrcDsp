@@ -26,7 +26,8 @@ namespace dsptl_private
 	template<>
 	struct ModAmplitude < int16_t >
 	{
-		static const int16_t value = 8192;
+		ModAmplitude(){ value = 8192; }
+		int16_t value;
 	};
 
 	template<>
@@ -84,6 +85,7 @@ namespace dsptl
 			map[1] = { static_cast<T>(-amplitude), amplitude };
 			map[2] = {  static_cast<T>(-amplitude),  static_cast<T>(-amplitude) };
 			map[3] = { amplitude,  static_cast<T>(-amplitude) };
+			reset();
 
 		}
 
@@ -112,7 +114,7 @@ namespace dsptl
 
 
 	private:
-		int state = 0;
+		int state;
 		std::complex<T> map[4];
 
 

@@ -60,7 +60,7 @@ namespace dsptl
 		uint32_t coeffsEnergy;
 		uint32_t corrValue[3] ;
 		uint32_t energyValue[3] ;
-		double thresholdCoeff;
+		double thresholdFactor;
 		size_t top;
 
 	
@@ -121,7 +121,7 @@ namespace dsptl
 			coeffsEnergy += (coeffs[index].real() * coeffs[index].real() + coeffs[index].imag() * coeffs[index].imag());
 		}
 
-		double tmp = thresholdCoeff * sqrt(coeffsEnergy);
+		thresholdFactor = thresholdCoeff * sqrt(coeffsEnergy);
 
 		assert(coeffsEnergy <= 1073217600); // Each coeffs value must be less than 13 bits.
 
@@ -180,33 +180,33 @@ namespace dsptl
 			corrValue[0] = tmp.real()* tmp.real() + tmp.imag() * tmp.imag();
 
 
-
-
 			// Have we passed a peak
 			if (corrValue[1] >= corrValue[2] && corrValue[1] >= corrValue[0])
 			{
 				// Do we exceed the threshold
 				double corr = corrValue[2];
-				
-				if (true)
-				{
-					// We have found a peak
-					// -1 to refer to the previous sample
-					corrIndex = index - 1;  
-					// We extract the bit samples
-					for (int k = 0; (hIndex = top -1 - k*S) >= 0; ++k)
+				double energy = energyValue[2];
+				if(corr > (sqrt(energy) * thresholdFactor))
+				{				
+					if (false)
 					{
-						bitSamples[N - 1 - k] = history[hIndex];
-					}
-					for (int k = 0; (hIndex = top -1 + (k + 1)*S) < historySize; ++k)
-					{
-						bitSamples[k] = history[hIndex];
-					}
-					syncFound = true;
-					break;
+						// We have found a peak
+						// -1 to refer to the previous sample
+						corrIndex = index - 1;  
+						// We extract the bit samples
+						for (int k = 0; (hIndex = top -1 - k*S) >= 0; ++k)
+						{
+							bitSamples[N - 1 - k] = history[hIndex];
+						}
+						for (int k = 0; (hIndex = top -1 + (k + 1)*S) < historySize; ++k)
+						{
+							bitSamples[k] = history[hIndex];
+						}
+						syncFound = true;
+						break;
 
+					}
 				}
-			}
 
 
 			top = ++top % historySize;
@@ -216,7 +216,7 @@ namespace dsptl
 
 
 		return syncFound;
-	};
+	}
 
 
 
