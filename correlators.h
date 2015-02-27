@@ -186,19 +186,19 @@ namespace dsptl
 				// Do we exceed the threshold
 				double corr = corrValue[2];
 				double energy = energyValue[2];
-				if(corr > (sqrt(energy) * thresholdFactor))
-				{				
+				if (corr > (sqrt(energy) * thresholdFactor))
+				{
 					if (false)
 					{
 						// We have found a peak
 						// -1 to refer to the previous sample
-						corrIndex = index - 1;  
+						corrIndex = index - 1;
 						// We extract the bit samples
-						for (int k = 0; (hIndex = top -1 - k*S) >= 0; ++k)
+						for (int k = 0; (hIndex = top - 1 - k*S) >= 0; ++k)
 						{
 							bitSamples[N - 1 - k] = history[hIndex];
 						}
-						for (int k = 0; (hIndex = top -1 + (k + 1)*S) < historySize; ++k)
+						for (int k = 0; (hIndex = top - 1 + (k + 1)*S) < historySize; ++k)
 						{
 							bitSamples[k] = history[hIndex];
 						}
@@ -207,7 +207,7 @@ namespace dsptl
 
 					}
 				}
-
+			}
 
 			top = ++top % historySize;
 			
