@@ -9,15 +9,15 @@ Class names: ClassName
 Class member data : dataMember
 Class member function: functionMember
 
-
-
-------------------------------------------------------------------------------*/
+-----------------------------------------------------------------------------*/
 
 #ifndef _DNSAMPLING_FILTER_FIR_H
 #define _DNSAMPLING_FILTER_FIR_H
 
 #include <cassert>
 #include <vector>
+#include "dsp_complex.h"
+#include <cmath>
 
 
 namespace dsptl
@@ -37,6 +37,9 @@ namespace dsptl
 	It is the responsibility of the caller to make sure that the different types 
 	work smoothly. Overflow and underflow conditions must not occur
 
+	@note The class is currently written to support int32_t coefficients, int16_t inputs
+	and int16_t outputs. Internal precision is int32_t.
+
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned M>
 	class FilterDnsamplingFir
@@ -44,20 +47,20 @@ namespace dsptl
 	public:
 		/// Constructor. Coefficients are defined. Size for the internal
 		/// buffer is reserved based on the number of coefficients
-		FilterUpsamplingFir(const std::vector<CoefType> &firCoeff);
+		FilterDnsamplingFir(const std::vector<CoefType> &firCoeff);
 		// This function is called for each iteration of the filtering process
-		void step(const std::vector<InType> & signal, std::vector<OutType> & filteredSignal);
+		void step(const std::vector<InType> & input, std::vector<OutType> & filteredSignal);
 		// Reset the internal counters and buffers
 		void reset()
 		{
-			top = 0;
-			for (size_t index = 0; index < buffer.size(); ++index)
-				buffer[index] = InType();
+			for (size_t index = 0; index < history.size(); ++index)
+				history[index] = InType();
 		}
 		
 	private:
 		std::vector<CoefType> coeff;		///< Coefficients
-		std::vector<InType> buffer;  	///< History buffer
+		std::vector<InType> history;  	///< History buffer
+		unsigned coeffScaling;  // Can be used to scale back the result 
 	};
 
 
@@ -78,7 +81,12 @@ namespace dsptl
 
 		// The internal history buffer is sized according to the 
 		// number of coefficients
-		buffer.resize(firCoeff.size());
+		history.resize(firCoeff.size()-1);
+		// bit growth due to coefficient  and number of taps
+		double sumMagnitude = 0;
+		for (size_t index = 0; index < coeff.size(); ++index)
+			sumMagnitude += abs(coeff[index]);
+		coeffScaling = static_cast<int>(floor(log2(sumMagnitude)));
 	}
 
 
@@ -96,61 +104,64 @@ namespace dsptl
 	No copy of the input samples is made except for the last N-1.\n
 
 	The algorithm performs well as long as the number of input samples to process is
-	large compared to the number of coefficients of the filter.\
+	large compared to the number of coefficients of the filter.\n
 
 
 	The user must make sure that the internal type is large enough to contain the
 	accumulated sum of the convolution operation\n
 	The user must make sure that the size of the input buffer is a multiple of M and that 
-	the size of the output buffer is 1/M times the size of the input buffer
+	the size of the output buffer is 1/M times the size of the input buffer.\n
+	The output is always scaled to maintain a gain of between 0 and 6dB
 
 	@param input Input to the filter
 	@param filteredSignal Output of the filter. Must be the same size as signal
 
+
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned M>
-	void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, M>::step(const std::vector<InType> & input, std::vector<OutType> & filteredSignal)
+	void FilterDnsamplingFir<InType, OutType, InternalType, CoefType, M>::step(const std::vector<InType> & input, std::vector<OutType> & filteredSignal)
 	{
 
 		// There should be M times more samples at the input than the output
 		assert(filteredSignal.size() * M == input.size());
 
 		InternalType y;  				// Output result
-		size_t histSize = buffer.size();	// Number of taps in the filter
-		size_t inputSize = input.size();	// Number of input samples
+		int N = coeff.size();	// Number of taps in the filter
+		int inputSize = input.size();	// Number of input samples
+		int outIndex;
 		
-		for(unsigned j = 0; j < inputSize ; j+= M)
+		for(int j = 0; j < inputSize ; j+= M)
 		{
-		// This loop is executed for each M of the input samples
-		y = InternalType{};
-		// Two scenarios must be considered
-		// A: need for history data
-		// B: no need for history data
+			// This loop is executed for each M of the input samples
+			y = InternalType{};
+			outIndex = j / M;
+			// Two scenarios must be considered
+			// A: need for history data
+			// B: no need for history data
 		
-		// The sample location is within the N-1 first samples
-		if( j < N-1)
-		{
-			// History is needed
-			for(int k = 0; k <= j; ++k)
-				y += coeff[k] * input[j - k];
-			for(int k = j+1 , int p = 0; k < N ; ++k, ++p)
-				y += coeff[k] * history[N -2 -p];
-		}
-		else
-		{
-			// History is not needed
-			for(int k = 0; k < N; ++k)
-				y += coeff[k] * input[j - k];
+			// The sample location is within the N-1 first samples
+			if( j < N-1)
+			{
+				// History is needed
+				for(int k = 0; k <= j; ++k)
+					y += coeff[k] * input[j - k];
+				for(int k = j+1 , p = 0; k < N ; ++k, ++p)
+					y += coeff[k] * history[N -2 -p];
+			}
+			else
+			{
+				// History is not needed
+				for(int k = 0; k < N; ++k)
+					y += coeff[k] * input[j - k];
+			}		
 			// copy the result to its destination
-			filteredSignal[outIndex++] = static_cast<OutType>(y);
+			filteredSignal[outIndex++] = limitScale16(y, coeffScaling);
 		}
-		
 		// We copy N-1 samples of historical data for the next iteration
-		std::copy(&input[inputSize - N + 1], &input[inputSize],&buffer[0]);
-		
-		}
-
+		for (int k = 0; k < N - 1; ++k)
+			history[k] = input[inputSize - N + 1 +k];
 	}
+
 
 } // end of namespace
 
