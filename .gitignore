@@ -1,4 +1,5 @@
 *~
+*.o
 .modulators*
 .buffers*
 buffers_test
