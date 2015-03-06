@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <complex>
 
-namespace dsptl
+namespace dsptl_private
 {
 
 	// BASE CLASS
@@ -30,7 +30,7 @@ namespace dsptl
 		PhaseType phi;		/// Phase to be used to multiply the next sample
 		PhaseType freq;    /// Frequency in radian per sample
 		std::vector<PhaseType> ptable;   /// Sine table representing 0 to 2pi
-	
+
 	};
 
 
@@ -50,12 +50,19 @@ namespace dsptl
 
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class PhaseType, unsigned N >
-	void _Mixer<InType, OutType, PhaseType , N>::reset()
+	void _Mixer<InType, OutType, PhaseType, N>::reset()
 	{
 		phi = PhaseType{};
 	}
 
+
+}
+
 	
+namespace dsptl
+{
+
+
 	//  DERIVED CLASS AND SPECIALIZATION
 
 
@@ -80,7 +87,7 @@ namespace dsptl
 
 	------------------------------------------------------------------------------*/
 	template<unsigned N >
-	class Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N > : public _Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >
+	class Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N > : public dsptl_private::_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >
 	{
 	public:
 		Mixer();
