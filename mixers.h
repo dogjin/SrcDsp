@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <complex>
 
-namespace dsptl_private
+namespace dsptl  // used to be dsptl_private but issue with gcc 453
 {
 
 	// BASE CLASS
@@ -87,7 +87,7 @@ namespace dsptl
 
 	------------------------------------------------------------------------------*/
 	template<unsigned N >
-	class Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N > : public dsptl_private::_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >
+	class Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N > : public dsptl::_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >
 	{
 	public:
 		Mixer();
@@ -113,7 +113,8 @@ namespace dsptl
 		// The maximum amplitude is given by the value of max
 		const int16_t max = (INT16_MAX >> 1);
 		for (size_t k = 0; k < N; ++k)
-			ptable.push_back( static_cast<int16_t>(max * sin(2 * pi * static_cast<double>(k) / N)));
+			// full qualification of the _Mixer was added to remedy a bug in gcc 453
+			_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::ptable.push_back( static_cast<int16_t>(max * sin(2 * pi * static_cast<double>(k) / N)));
 
 	};
 
@@ -126,12 +127,13 @@ namespace dsptl
 	template <unsigned N >
 	void Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::step(std::vector<std::complex<int16_t>> & in, std::vector<std::complex<int16_t>> & out)
 	{
-
+		// Full qualification of the base class members is due to a bug in gcc453
 		for (size_t k = 0; k < in.size(); ++k)
 		{		
 			// To maintain a gain of 1 , the output scaling must correspond to the amplitude of the local oscillator
-			out[k] = limitScale16(in[k] * std::complex<int32_t>(ptable[(phi + N / 4) % N], ptable[phi]), 14);
-			phi = (phi + freq) % N;
+			out[k] = limitScale16(in[k] * std::complex<int32_t>(_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::ptable[(_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::phi + N / 4) % N],
+							_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::ptable[_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::phi]), 14);
+			_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::phi = (_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::phi + _Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::freq) % N;
 			
 		}
 	}

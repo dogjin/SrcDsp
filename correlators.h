@@ -22,7 +22,7 @@ Class member function: functionMember
 #include <fstream>
 
 
-#define CREATE_DEBUG_FILES
+//#define CREATE_DEBUG_FILES
 
 namespace dsptl
 {
