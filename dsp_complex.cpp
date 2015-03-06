@@ -46,6 +46,15 @@ std::complex<int32_t> scale32(std::complex<int32_t> z, unsigned shift)
 }
 
 /*---------------------------------------------------------------------------- -
+Apply the right shift specified as parameter then store the result in an unsigned 32 bits
+complex.
+------------------------------------------------------------------------------*/
+std::complex<uint32_t> scale32(std::complex<uint32_t> z, unsigned shift)
+{
+	return std::complex<uint32_t>(z.real() >> shift, z.imag() >> shift);
+}
+
+/*---------------------------------------------------------------------------- -
 Apply the right shift specified as parameter then store the result in a 16 bits
 complex.\n
 The value is limited before storage to the maximum value of a 16 bits integer.

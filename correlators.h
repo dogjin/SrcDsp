@@ -19,7 +19,10 @@ Class member function: functionMember
 #include <complex>
 #include <array>
 #include <cstdint>
+#include <fstream>
 
+
+#define CREATE_DEBUG_FILES
 
 namespace dsptl
 {
@@ -47,7 +50,7 @@ namespace dsptl
 
 	public:
 		FixedPatternCorrelator();
-		bool step(const std::vector <std::complex<InType> > &in, size_t & corrIndex);
+		bool step(const std::vector <std::complex<InType> > &in, int & corrIndex);
 		void setPattern(const std::array<std::complex<CompType>, N > &in, double thresholdCoeff = 0.8 );
 		void reset();
 
@@ -62,6 +65,14 @@ namespace dsptl
 		uint32_t energyValue[3] ;
 		double thresholdFactor;
 		size_t top;
+		int coeffScaling;
+
+		// Debugging routines
+		#ifdef CREATE_DEBUG_FILES
+		std::ofstream fenergy;
+		std::ofstream fcorr;
+		std::ofstream fthreshold;
+		#endif
 
 	
 	};
@@ -79,7 +90,11 @@ namespace dsptl
 	FixedPatternCorrelator<InType, CompType, N, S >::FixedPatternCorrelator()
 	{
 		reset();
-
+		#ifdef CREATE_DEBUG_FILES
+		fenergy.open("debug_corr_energy.dat");
+		fcorr.open("debug_corr_values.dat");
+		fthreshold.open("debug_corr_threshold.dat");
+		#endif
 	}
 
 	/*-----------------------------------------------------------------------------
@@ -107,6 +122,9 @@ namespace dsptl
 
 	@param[in] in Correlation pattern
 
+	The coefficients should be passed as non conjuguate values (i.e. as a replica of 
+	the desired signal) because the routine conjuguates them before storage.\n
+
 	The function also compute and stores the energy of the correlation signal
 
 	------------------------------------------------------------------------------*/
@@ -114,16 +132,28 @@ namespace dsptl
 	void FixedPatternCorrelator<InType, CompType, N, S >::setPattern(const std::array<std::complex<CompType>, N > &in, double thresholdCoeff)
 	{
 		coeffs = in;
-		coeffsEnergy = 0;
-		for (size_t index = 0; index < N; ++index)
+
+		// We conjuguate the coefficients
+		for (auto it = coeffs.begin(); it != coeffs.end(); ++it)
 		{
-			// A scaling factor of 2 is applied to keep the energy within a 32 bit unsigned value
-			coeffsEnergy += (coeffs[index].real() * coeffs[index].real() + coeffs[index].imag() * coeffs[index].imag());
+			*it = std::complex<CompType>(it->real(), -it->imag());
 		}
 
+		// We compute the energy in the coefficients
+		coeffsEnergy = 0;
+		double tmp = 0;
+		for (size_t index = 0; index < N; ++index)
+		{
+			tmp += (coeffs[index].real() * coeffs[index].real() + coeffs[index].imag() * coeffs[index].imag());
+		}
+		assert(tmp <= 1073217600); // Each coeffs value must be less than 13 bits.
+
+		coeffsEnergy = static_cast<uint32_t>(tmp);
 		thresholdFactor = thresholdCoeff * sqrt(coeffsEnergy);
 
-		assert(coeffsEnergy <= 1073217600); // Each coeffs value must be less than 13 bits.
+		coeffScaling = static_cast<int>(floor(log2(sqrt(coeffsEnergy))));
+
+
 
 	}
 
@@ -141,9 +171,9 @@ namespace dsptl
 	@return true if correlation peak has been detected; false otherwise
 	------------------------------------------------------------------------------*/
 	template<class InType, class CompType, size_t N, size_t S >
-	bool FixedPatternCorrelator<InType, CompType, N, S >::step(const std::vector < std::complex<InType> > &in, size_t & corrIndex)
+	bool FixedPatternCorrelator<InType, CompType, N, S >::step(const std::vector < std::complex<InType> > &in, int & corrIndex)
 	{
-		size_t inSize = in.size();
+		int inSize = in.size();
 		int historySize = static_cast<int>(history.size());
 		std::complex< CompType> tmp;
 		int k;
@@ -152,7 +182,7 @@ namespace dsptl
 
 
 		// Iteration over each element of the input buffer
-		for (size_t index = 0; index < inSize; index++)
+		for (int index = 0; index < inSize; index++)
 		{
 			// Each element is copied into the history buffer
 			history[top] = in[index];
@@ -174,38 +204,50 @@ namespace dsptl
 				energyValue[0] += history[hIndex].real() * history[hIndex].real() + history[hIndex].imag() *  history[hIndex].imag();
 			}
 
-			// Store the magnitude of the correlation value
+			tmp = scale32(tmp, coeffScaling);  // V2 dimension
+			energyValue[0] = energyValue[0] >> (coeffScaling/2);  // V2 dimension
+
+			// Store the squared magnitude of the correlation values
 			corrValue[2] = corrValue[1];
 			corrValue[1] = corrValue[0];
-			corrValue[0] = tmp.real()* tmp.real() + tmp.imag() * tmp.imag();
+			corrValue[0] = (tmp.real() >> 2)*(tmp.real()>>2) + (tmp.imag()>>2) * (tmp.imag()>>2);
 
+			// DEBUG ONLY
+			#ifdef CREATE_DEBUG_FILES
+			fenergy << sqrt(energyValue[0]) << '\n';
+			fcorr << sqrt(corrValue[0]) << '\n';
+			fthreshold << sqrt(energyValue[0]) * 2.5 << '\n';
+			#endif
 
-			// Have we passed a peak
-			if (corrValue[1] >= corrValue[2] && corrValue[1] >= corrValue[0])
+			if (index == 999)
 			{
-				// Do we exceed the threshold
-				double corr = corrValue[2];
-				double energy = energyValue[2];
-				if (corr > (sqrt(energy) * thresholdFactor))
-				{
-					if (false)
-					{
-						// We have found a peak
-						// -1 to refer to the previous sample
-						corrIndex = index - 1;
-						// We extract the bit samples
-						for (int k = 0; (hIndex = top - 1 - k*S) >= 0; ++k)
-						{
-							bitSamples[N - 1 - k] = history[hIndex];
-						}
-						for (int k = 0; (hIndex = top - 1 + (k + 1)*S) < historySize; ++k)
-						{
-							bitSamples[k] = history[hIndex];
-						}
-						syncFound = true;
-						break;
+				int i = 0;
+			}
 
+
+
+			// Is the middle point (index 1) a peak?
+			if (corrValue[1] > corrValue[2] && corrValue[1] > corrValue[0])
+			{
+				// Has the middle point (index 1) exceeded the threshold?
+				double corr = sqrt(corrValue[1]); // magnitude of the correlation
+				double energy = sqrt(energyValue[1]); // magnitude of the signal energy   
+				if (corr > energy * thresholdFactor)
+				{
+					// Index 1 is a peak which exceeded the threshold
+					// -1 to refer to the previous sample
+					corrIndex = index - 1;
+					// We extract the bit samples
+					for (int k = 0; (hIndex = top - 1 - k*S) >= 0; ++k)
+					{
+						bitSamples[N - 1 - k] = history[hIndex];
 					}
+					for (int k = 0; (hIndex = top - 1 + (k + 1)*S) < historySize; ++k)
+					{
+						bitSamples[k] = history[hIndex];
+					}
+					syncFound = true;
+					//break; DEBUG ONLY
 				}
 			}
 
@@ -223,6 +265,9 @@ namespace dsptl
 } // End of namespace 
 
 
+#ifdef CREATE_DEBUG_FILES
+#undef  CREATE_DEBUG_FILES
+#endif
 
 
 #endif

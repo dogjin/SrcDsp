@@ -31,7 +31,7 @@ namespace dsptl
 
 	@tparam OutType Type of the output signal
 
-	@param frequency Sinewave frequency in rad/sample
+	@param frequency Sinewave frequency in normalized units between 0 and 1
 	@param amplitude Peak amplitude of the sinewave
 
 	The computation are done internally as double and converted to the desired type
@@ -44,8 +44,9 @@ namespace dsptl
 	{
 	public:
 		/// Constructor. 
-		GenSine(double frequency, OutType amplitude) : freq(frequency), ampl(amplitude)
+		GenSine(double frequency, OutType amplitude) : ampl(amplitude)
 		{
+			freq = frequency * pi;
 			phase = 0;
 		}
 		// Generate a number of samples equal to the size of the buffer given
@@ -76,9 +77,10 @@ namespace dsptl
 	{
 	public:
 		/// Constructor. 
-		GenSine(double frequency, OutType amplitude) : freq(frequency), ampl(amplitude)
+		GenSine(double frequency, OutType amplitude) :  ampl(amplitude)
 		{
 			phase = 0;
+			freq = frequency * pi;
 		}
 		// Generate a number of samples equal to the size of the buffer given
 		void step(std::vector<std::complex<OutType> >& out)
