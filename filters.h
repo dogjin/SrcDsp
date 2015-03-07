@@ -45,10 +45,12 @@ class FilterFir
 public:
 	/// Constructor. Coefficients are defined. Size for the internal
 	/// buffer is reserved based on the number of coefficients
+	FilterFir():top(0){};
 	FilterFir(const std::vector<CoefType> &firCoeff);
 	// This function is called for each iteration of the filtering process
 	void step(const std::vector<InType> & signal, std::vector<OutType> & filteredSignal);
 	void reset();
+	void setCoeffs(const std::vector<CoefType> &firCoeff);
 	
 private:
 	std::vector<CoefType> coeff;		///< Coefficients
@@ -69,8 +71,21 @@ buffer for computations.
 ------------------------------------------------------------------------------*/
 template<class InType, class OutType, class InternalType, class CoefType>
 FilterFir<InType, OutType, InternalType, CoefType>::FilterFir(const std::vector<CoefType> &firCoeff)
-		: coeff(firCoeff), top(0)
+		: top(0)
 {
+	setCoeffs(firCoeff);
+}
+
+
+/*-----------------------------------------------------------------------------
+Sets or replaces the filter tap coefficients.
+
+
+------------------------------------------------------------------------------*/
+template<class InType, class OutType, class InternalType, class CoefType>
+void FilterFir<InType, OutType, InternalType, CoefType>::setCoeffs(const std::vector<CoefType> &firCoeff)
+{
+	coeff = firCoeff;
 	buffer.resize(firCoeff.size());
 	// Compute the energy in the coefficients
 	// bit growth due to coefficient  and number of taps
@@ -78,7 +93,10 @@ FilterFir<InType, OutType, InternalType, CoefType>::FilterFir(const std::vector<
 	for (size_t index = 0; index < coeff.size(); ++index)
 		sumMagnitude += abs(coeff[index]);
 	coeffScaling = static_cast<int>(floor(log2(sumMagnitude)));
+	reset();
 }
+
+
 
 /*-----------------------------------------------------------------------------
 Reset the internal state of the filter. All history is cleared.

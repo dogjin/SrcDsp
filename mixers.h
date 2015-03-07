@@ -4,6 +4,8 @@
 
 #include <cstdint>
 #include <complex>
+#include "generators.h" // for pi
+#include "dsp_complex.h"
 
 namespace dsptl  // used to be dsptl_private but issue with gcc 453
 {
@@ -13,17 +15,18 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 	/*-----------------------------------------------------------------------------
 	Base class for the implementation of the mixers
 
-
 	@tparam InType Data type of the input signal
 	@tparam OutType  Data type of the output signal
 	@tparam PhaseType Type of the phase
 	@tparam N Number of points for the sine table
+	
+	Upon construction, the frequency and the phase are initialized to zero
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class PhaseType, unsigned N = 4096>
 	class _Mixer
 	{
 	public:
-		_Mixer(){};
+		_Mixer():freq(), phi(){};
 		void setFrequency(float loFreq);
 		void reset();
 	protected:
@@ -37,7 +40,7 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 	/*-----------------------------------------------------------------------------
 	Sets the frequency in radians per sample
 
-	@param loFreq Frequency of the local oscillator  in normalized frequency
+	@param loFreq Frequency of the local oscillator  in normalized frequency (0 to 1)
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class PhaseType, unsigned N >
 	void _Mixer<InType, OutType, PhaseType, N>::setFrequency(float loFreq)
@@ -71,7 +74,7 @@ namespace dsptl
 
 	@tparam InType Data type of the input signal
 	@tparam OutType  Data type of the output signal
-	@tparam PhaseType Type of the phase
+	@tparam PhaseType Type of the phase.
 	@tparam N Number of points for the sine table
 
 
@@ -114,7 +117,7 @@ namespace dsptl
 		const int16_t max = (INT16_MAX >> 1);
 		for (size_t k = 0; k < N; ++k)
 			// full qualification of the _Mixer was added to remedy a bug in gcc 453
-			_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::ptable.push_back( static_cast<int16_t>(max * sin(2 * pi * static_cast<double>(k) / N)));
+			_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::ptable.push_back( static_cast<int16_t>(max * sin(2 * dsptl::pi * static_cast<double>(k) / N)));
 
 	};
 
