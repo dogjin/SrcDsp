@@ -18,13 +18,14 @@ Class member function: functionMember
 #include <vector>
 #include <complex>
 #include <cmath>
+#include "constants.h"
 
 // Uncomment the following line to include the C++ specific syntax
 //#define CPLUSPLUS11
 
 namespace dsptl
 {
-	const double pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286;
+
 
 	/*-----------------------------------------------------------------------------
 	Sinewave generator. Generates sinewaves

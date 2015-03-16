@@ -20,6 +20,7 @@ Class member function: functionMember
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <cassert>
 
 
 //#define CREATE_DEBUG_FILES
@@ -53,12 +54,13 @@ namespace dsptl
 		bool step(const std::vector <std::complex<InType> > &in, int & corrIndex);
 		void setPattern(const std::array<std::complex<CompType>, N > &in, double thresholdCoeff = 0.8 );
 		void reset();
+		std::vector<std::complex<InType>> getRefBitSamples();
 
 
 	private:
 		std::array < std::complex<CompType>, N*S> history;
 		std::array < std::complex<CompType>, N > coeffs;
-		std::array < std::complex<InType>, N > bitSamples;
+		std::vector < std::complex<InType> > bitSamples;
 
 		uint32_t coeffsEnergy;
 		uint32_t corrValue[3] ;
@@ -89,6 +91,7 @@ namespace dsptl
 	template<class InType, class CompType, size_t N, size_t S >
 	FixedPatternCorrelator<InType, CompType, N, S >::FixedPatternCorrelator()
 	{
+		bitSamples.assign(N, {});
 		reset();
 		#ifdef CREATE_DEBUG_FILES
 		fenergy.open("debug_corr_energy.dat");
@@ -232,22 +235,30 @@ namespace dsptl
 				// Has the middle point (index 1) exceeded the threshold?
 				double corr = sqrt(corrValue[1]); // magnitude of the correlation
 				double energy = sqrt(energyValue[1]); // magnitude of the signal energy   
-				if (corr > energy * thresholdFactor)
+				if (corr > energy * 2.5)
 				{
 					// Index 1 is a peak which exceeded the threshold
 					// -1 to refer to the previous sample
 					corrIndex = index - 1;
-					// We extract the bit samples
-					for (int k = 0; (hIndex = top - 1 - k*S) >= 0; ++k)
+					//  We extract the bit samples corresponding to the found correlation
+					// top represents the location of the last input sample process
+					// top - 1 modulo historySize is the location of the sample at which the peak occurred
+					// From this peak correlation sample, extract every S bit samples from the history buffer.
+					// We iterate with a stride S on the history buffer
+					size_t newTop;
+					if (top > 0) newTop = top - 1;
+					else newTop = historySize - 1;
+					for (int k = 0; (hIndex = newTop - k*S) >= 0; ++k)
 					{
 						bitSamples[N - 1 - k] = history[hIndex];
 					}
-					for (int k = 0; (hIndex = top - 1 + (k + 1)*S) < historySize; ++k)
+					for (int k = 0; (hIndex = newTop + (k + 1)*S) < historySize; ++k)
 					{
 						bitSamples[k] = history[hIndex];
 					}
 					syncFound = true;
-					//break; DEBUG ONLY
+
+					break;
 				}
 			}
 
@@ -260,6 +271,18 @@ namespace dsptl
 		return syncFound;
 	}
 
+	/**************************************************************************//**
+	Return the bitSamples corresponding to a successful correlation. The number of
+	bit samples returned is the same as the number of bits used to compute each 
+	correlation point.
+
+	******************************************************************************/
+	template<class InType, class CompType, size_t N, size_t S >
+	std::vector<std::complex<InType>> FixedPatternCorrelator<InType, CompType, N, S >::getRefBitSamples()
+	{
+		return bitSamples;
+
+	}
 
 
 } // End of namespace 

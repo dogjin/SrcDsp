@@ -1,25 +1,19 @@
 /*-----------------------------------------------------------------------------
 @file
 
-Definition of all DSP routines which perform demodulation
+Definition member functions of the full specialization of the demodulators 
+header file\n
 
-The naming conventions are as follows:
-Class names: ClassName
-Class member data : dataMember
-Class member function: functionMember
+This file was necessary because leaving the definition of the functions of
+a fully specialized class template in the header file creates duplicate definitions
+in Visual Studio
 
 ------------------------------------------------------------------------------*/
 
-#ifndef DEMODULATORS_H
-#define DEMODULATORS_H
 
 
-
-
-#include <complex>
-#include <cstdint>
-#include <vector>
-#include "constants.h"
+#include "demodulators.h"
+#include "generators.h" // For the use of dsptl::pi
 
 namespace dsptl_private
 {
@@ -29,108 +23,21 @@ namespace dsptl_private
 namespace dsptl
 {
 
-	/*-----------------------------------------------------------------------------
-	OQPSK Demodulator
-
-	Primary template
-
-	@tparam T Type of the input data to the demodulator
-
-	------------------------------------------------------------------------------*/
-	template<class InType>
-	class DemodulatorOqpsk;
 
 
-
-	/*-----------------------------------------------------------------------------
-	OQPSK Demodulator
-
-	Implementation for signed byte as input.
-	The output of the demodulator is a vector of softbits. Each softbit is a signed
-	8 bits value.
-
-	------------------------------------------------------------------------------*/
-	template<>
-	class DemodulatorOqpsk<int16_t>
-	{
-	public:
-		DemodulatorOqpsk();
-		std::vector<int8_t> step(std::vector<std::complex<int16_t>> in, int32_t & error);
-		void reset();
-		void setSyncPattern(std::vector<int8_t> bits){ bitSyncPattern = bits; };
-		/// Initial frequency of the loop in rad/samples
-		void setInitialFrequency(float f) { intialFreqEst = static_cast<int16_t>(round(f * onePi / dsptl::pi)); }
-		/// Initial phase of the loop in radians
-		void setInitialPhase(float p) { initialPhase = static_cast<int16_t>(round(p * onePi / dsptl::pi)); }
-		/// Sets the reference vector which contains the I and Q of the preamble after removing the modulation
-		void setReference(std::vector<std::complex<int16_t>> ref);
-
-
-	private:
-		struct {
-			unsigned bitCnt;
-			int mod2Cnt;
-			int16_t phase;
-			int bit1;
-			int bit2;
-			int16_t Iprev;
-			int16_t Qprev;
-			void reset()
-			{
-				bitCnt = 0; mod2Cnt = 0; phase = 0; bit1 = 0; bit2 = 0; Iprev = 0; Qprev = 0;
-			}
-		} stateVar;
-
-
-	private:
-		int16_t quickPhase(int16_t re, int16_t im);
-		void phaseShift(int16_t inRe, int16_t inIm, int16_t & outRe, int16_t & outIm, int16_t phase);
-		/// Sync pattern represented as an array of 0 and 1. If empty, it is assumed that there is
-		/// no sync word
-		std::vector<int8_t> bitSyncPattern;
-		/// Reference bit samples. This samples correspond to the sync pattern in which the
-		/// modulation has been removed.
-		/// If empty, it is assumed that there is no sync word
-		std::vector<int16_t> Iref;
-		std::vector<int16_t> Qref;
-		/// Initial frequency estimate
-		int16_t intialFreqEst;
-		/// Initial phase between 0 and twoPi
-		int16_t initialPhase;
-		/// Coefficients for demodulation
-		int32_t g1 = 19333;
-		int32_t g2 = 13107;
-		/// Gain factor for PLL
-		int32_t b0 = 8000;
-
-		const int32_t maxAmp;
-		const int16_t twoPi;
-		const int16_t onePi;
-		const int16_t halfPi;
-		/// Phase look up table with 8192 entries
-		/// Each entry corresponds to an integer value of the real and imaginary part
-		/// This should become static to prevent duplication
-		std::vector<int16_t> phaseLUT;
-		std::vector<int16_t> sineLUT;
-		
-
-
-	};
-
-#if 0
 	/*-----------------------------------------------------------------------------
 	Constructor
 
 	Create the sine and phase lookup table
 
 	------------------------------------------------------------------------------*/
-	DemodulatorOqpsk<int16_t>::DemodulatorOqpsk():
+	DemodulatorOqpsk<int16_t>::DemodulatorOqpsk() :
 		twoPi(8192), onePi(4096), halfPi(2048), maxAmp(128)
 	{
 		// Build the phase lookup table
 		int16_t phase;
 		phaseLUT.assign(maxAmp * maxAmp, {});
-		for (int im = 0; im < maxAmp ; ++im)
+		for (int im = 0; im < maxAmp; ++im)
 			for (int re = 0; re < maxAmp; ++re)
 			{
 				auto tmp = atan2(im, re) * onePi / dsptl::pi;
@@ -141,13 +48,13 @@ namespace dsptl
 
 		// Build the sine lookup table
 		sineLUT.assign(twoPi, {});
-		for (int index = 0; index < twoPi ; ++index)
+		for (int index = 0; index < twoPi; ++index)
 		{
 			double phase = index * (dsptl::pi / static_cast<double>(onePi));
 			sineLUT[index] = static_cast<int16_t>(sin(phase) * INT16_MAX);
 		}
 		reset();
-	
+
 	}
 
 
@@ -158,7 +65,7 @@ namespace dsptl
 		bool quad2 = re <= 0 && im > 0;
 		bool quad3 = re < 0 && im <= 0;
 		bool quad4 = re >= 0 && im < 0;
-		
+
 		// rotate the input to the first quadrant
 		re = abs(re);
 		im = abs(im);
@@ -392,9 +299,6 @@ namespace dsptl
 
 	}
 
-#endif
+
 
 } // end of namespace
-
-
-#endif
