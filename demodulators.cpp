@@ -188,8 +188,8 @@ namespace dsptl
 			int32_t tmp32;
 			if (!bitSyncPattern.empty() && bitCnt < bitSyncPattern.size())
 			{
-				I = Iref[k];
-				Q = Qref[k];
+				I = Iref[k] >> rightShift;
+				Q = Qref[k] >> rightShift;
 				// Phase correction
 				phaseShift(I, Q, I, Q, phaseAcc);
 				reErrVec = I;
@@ -197,8 +197,8 @@ namespace dsptl
 			}
 			else
 			{
-				I = in[k].real();
-				Q = in[k].imag();
+				I = in[k].real() >> rightShift;
+				Q = in[k].imag() >> rightShift;
 				phaseShift(I, Q, I, Q, phaseAcc);
 				if (!bitSyncPattern.empty() && bitCnt == bitSyncPattern.size())
 				{
@@ -286,6 +286,7 @@ namespace dsptl
 	void DemodulatorOqpsk<int16_t>::reset()
 	{
 		stateVar.reset();
+		rightShift = 0;
 		int num = bitSyncPattern.size();
 		if (!bitSyncPattern.empty())
 		{

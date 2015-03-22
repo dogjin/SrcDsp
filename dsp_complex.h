@@ -17,6 +17,7 @@ Class member function: functionMember
 #define DSP_COMPLEX_H
 #include <cstdint>
 #include <complex>
+#include <vector>
 
 
 std::complex<int32_t> operator*(std::complex<int32_t> a, std::complex<int16_t> b);
@@ -47,10 +48,21 @@ inline std::complex<int32_t> addMutiplyScale(std::complex<int32_t> a, std::compl
 
 #endif
 
+
+
 namespace dsptl
 {
 
-
+	template <class OutType, class InType>
+	OutType sumPower(std::vector<std::complex<InType>> in)
+	{
+		OutType out{};
+		for (size_t index = 0; index < in.size(); ++index)
+		{
+			out = in[index].real()*in[index].real() + in[index].imag()*in[index].imag();
+		}
+		return out;
+	}
 
 } //end of namespace
 

@@ -34,6 +34,10 @@ namespace dsptl
 	The design is done so that 14 bits input values and 13 bits coefficients do not
 	saturate.\n
 
+	The macro CREATE_DEBUG_FILES can be defined so that the routine creates debugging files.
+	When debugging files are created, the routine will not exit after the first found correlation
+	point.
+
 
 
 	@tparam InType Data type of the input signal
@@ -235,7 +239,7 @@ namespace dsptl
 				// Has the middle point (index 1) exceeded the threshold?
 				double corr = sqrt(corrValue[1]); // magnitude of the correlation
 				double energy = sqrt(energyValue[1]); // magnitude of the signal energy   
-				if (corr > energy * 2.5)
+				if (corr > energy * 2.5 && energy > 3200)
 				{
 					// Index 1 is a peak which exceeded the threshold
 					// -1 to refer to the previous sample
@@ -257,8 +261,9 @@ namespace dsptl
 						bitSamples[k] = history[hIndex];
 					}
 					syncFound = true;
-
+					#ifndef CREATE_DEBUG_FILES
 					break;
+					#endif
 				}
 			}
 

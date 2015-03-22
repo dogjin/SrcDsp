@@ -64,6 +64,8 @@ namespace dsptl
 		void setInitialPhase(float p) { initialPhase = static_cast<int16_t>(round(p * onePi / dsptl::pi)); }
 		/// Sets the reference vector which contains the I and Q of the preamble after removing the modulation
 		void setReference(std::vector<std::complex<int16_t>> ref);
+		/// Sets how many right shift of the input must be done to keep the input within 8 bits
+		void setInputShift(int shift) { rightShift = shift; }
 
 
 	private:
@@ -102,6 +104,8 @@ namespace dsptl
 		int32_t g2 = 13107;
 		/// Gain factor for PLL
 		int32_t b0 = 8000;
+		/// Number of right shift to perform on the input signal to keep it under 8 bits
+		int rightShift = 0;
 
 		const int32_t maxAmp;
 		const int16_t twoPi;
