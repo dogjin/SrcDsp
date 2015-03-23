@@ -100,12 +100,12 @@ namespace dsptl
 		/// Initial phase between 0 and twoPi
 		int16_t initialPhase;
 		/// Coefficients for demodulation
-		int32_t g1 = 19333;
-		int32_t g2 = 13107;
+		static const int32_t g1 = 19333; // to prevent old compiler error
+		static const int32_t g2 = 13107;
 		/// Gain factor for PLL
-		int32_t b0 = 8000;
+		static const int32_t b0 = 8000;
 		/// Number of right shift to perform on the input signal to keep it under 8 bits
-		int rightShift = 0;
+		int rightShift ;
 
 		const int32_t maxAmp;
 		const int16_t twoPi;
@@ -384,6 +384,7 @@ namespace dsptl
 	{
 		stateVar.reset();
 		int num = bitSyncPattern.size();
+		rightShift = 0;
 		if (!bitSyncPattern.empty())
 		{
 			// We set bit 1 and bit 2 respectively to the last bit and the last before last

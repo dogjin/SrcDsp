@@ -88,7 +88,7 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 {
 	const int bitsInByte = 8;
 	//Create a string stream for formatting
-	ostringstream os;
+	std::ostringstream os;
 	os.fill('0');
 	os.setf(std::ios::hex, std::ios::basefield);
 	// How many extra bits will be needed?
@@ -116,7 +116,7 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 		if (shift == 0)
 		{
 			// A full byte has been collected
-			os << setw(2) << static_cast<uint16_t>(byte);
+			os << std::setw(2) << static_cast<uint16_t>(byte);
 			byte = 0;
 		}
 	}
@@ -125,10 +125,10 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 	//  There  is no need to explicitly add the zeros because the byte was initialized
 	// to zero
 	if (shift != 0)
-			os << setw(2) << static_cast<uint16_t>(byte);
+			os << std::setw(2) << static_cast<uint16_t>(byte);
 
 	// Add the information regarding the extra bits
-	os << "--" << setw(2) <<  extraBits;
+	os << "--" << std::setw(2) <<  extraBits;
 	return os.str();
 
 
