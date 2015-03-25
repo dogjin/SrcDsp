@@ -72,6 +72,7 @@ namespace dsptl
 		double thresholdFactor;
 		size_t top;
 		int coeffScaling;
+		uint32_t cntProcessedSamples; // Number of samples processed until detection
 
 		// Debugging routines
 		#ifdef CREATE_DEBUG_FILES
@@ -121,6 +122,7 @@ namespace dsptl
 			history[k] = {};
 		for (size_t k = 0; k < bitSamples.size(); ++k)
 			bitSamples[k] = {};
+		cntProcessedSamples = 0;
 
 	}
 
@@ -191,6 +193,7 @@ namespace dsptl
 		// Iteration over each element of the input buffer
 		for (int index = 0; index < inSize; index++)
 		{
+			++cntProcessedSamples;
 			// Each element is copied into the history buffer
 			history[top] = in[index];
 			tmp = std::complex<CompType>{};
@@ -226,7 +229,7 @@ namespace dsptl
 			fthreshold << sqrt(energyValue[0]) * 2.5 << '\n';
 			#endif
 
-			if (index == 999)
+			if (cntProcessedSamples == 417)
 			{
 				int i = 0;
 			}
@@ -239,7 +242,7 @@ namespace dsptl
 				// Has the middle point (index 1) exceeded the threshold?
 				double corr = sqrt(corrValue[1]); // magnitude of the correlation
 				double energy = sqrt(energyValue[1]); // magnitude of the signal energy   
-				if (corr > energy * 2.5 && energy > 3200)
+				if (corr > energy * 2.5 && energy > 1000)
 				{
 					// Index 1 is a peak which exceeded the threshold
 					// -1 to refer to the previous sample
@@ -261,9 +264,9 @@ namespace dsptl
 						bitSamples[k] = history[hIndex];
 					}
 					syncFound = true;
-					#ifndef CREATE_DEBUG_FILES
+					//#ifndef CREATE_DEBUG_FILES
 					break;
-					#endif
+					//#endif
 				}
 			}
 
