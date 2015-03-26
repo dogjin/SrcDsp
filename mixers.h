@@ -28,7 +28,7 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 	public:
 		_Mixer():freq(), phi(){};
 		void setFrequency(float loFreq);
-		void reset();
+		void reset(float loFreq = 0);
 	protected:
 		PhaseType phi;		/// Phase to be used to multiply the next sample
 		PhaseType freq;    /// Frequency in radian per sample
@@ -53,9 +53,10 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class PhaseType, unsigned N >
-	void _Mixer<InType, OutType, PhaseType, N>::reset()
+	void _Mixer<InType, OutType, PhaseType, N>::reset(float loFreq)
 	{
 		phi = PhaseType{};
+		setFrequency(loFreq);
 	}
 
 

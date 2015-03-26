@@ -176,6 +176,11 @@ namespace dsptl
 
 		int softCnt{}; // Number of output soft decisions
 		auto errAcc = int32_t{};
+		
+		// Start Sample from which to compute an average frequency offset
+		int freqComputationStart = numIn - nbrFreqSamples;
+		accumulatedFrequency = 0;
+	
 
 		// Loop processing
 		for (unsigned k = 0; k < numIn; ++k)
@@ -256,6 +261,8 @@ namespace dsptl
 			auto freqCorr = static_cast<int16_t>((tmp32 + 32768) / 65536);
 			// The phase error is in the range -4096 to 4096 but the accumulated phase is in the range 0 to 8191
 			int16_t step = intialFreqEst + freqCorr;
+			if(k >= freqComputationStart)
+				accumulatedFrequency += step;
 			auto tmp = phaseAcc + step + twoPi;  // force the value to be positive
 			phaseAcc = (tmp % twoPi);
 			// Toggle between even and odd bit

@@ -66,6 +66,8 @@ namespace dsptl
 		void setReference(std::vector<std::complex<int16_t>> ref);
 		/// Sets how many right shift of the input must be done to keep the input within 8 bits
 		void setInputShift(int shift) { rightShift = shift; }
+		/// Returns the averaged frequency in radians per sample of the last run of the demodulator
+		float getMeasuredFrequency() {return (accumulatedFrequency >> freqShift) * dsptl::pi / onePi;}
 
 
 	private:
@@ -104,6 +106,10 @@ namespace dsptl
 		static const int32_t g2 = 13107;
 		/// Gain factor for PLL
 		static const int32_t b0 = 8000;
+		/// Number of samples used to compute an average frequency offset
+		static const int nbrFreqSamples = 32;  // must be 2^freqShift
+		int32_t accumulatedFrequency;
+		static const int freqShift = 5; // Number of right shift to apply to accumulatedFrequency
 		/// Number of right shift to perform on the input signal to keep it under 8 bits
 		int rightShift ;
 
