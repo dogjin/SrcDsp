@@ -67,7 +67,7 @@ namespace dsptl
 		/// Sets how many right shift of the input must be done to keep the input within 8 bits
 		void setInputShift(int shift) { rightShift = shift; }
 		/// Returns the averaged frequency in radians per sample of the last run of the demodulator
-		float getMeasuredFrequency() {return (accumulatedFrequency >> freqShift) * dsptl::pi / onePi;}
+		float getMeasuredFrequency() {return static_cast<float>((accumulatedFrequency >> freqShift) * dsptl::pi / onePi);}
 
 
 	private:

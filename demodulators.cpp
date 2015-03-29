@@ -261,7 +261,7 @@ namespace dsptl
 			auto freqCorr = static_cast<int16_t>((tmp32 + 32768) / 65536);
 			// The phase error is in the range -4096 to 4096 but the accumulated phase is in the range 0 to 8191
 			int16_t step = intialFreqEst + freqCorr;
-			if(k >= freqComputationStart)
+			if (k >= static_cast<unsigned>(freqComputationStart))
 				accumulatedFrequency += step;
 			auto tmp = phaseAcc + step + twoPi;  // force the value to be positive
 			phaseAcc = (tmp % twoPi);
