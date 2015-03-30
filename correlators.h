@@ -242,7 +242,7 @@ namespace dsptl
 				// Has the middle point (index 1) exceeded the threshold?
 				double corr = sqrt(corrValue[1]); // magnitude of the correlation
 				double energy = sqrt(energyValue[1]); // magnitude of the signal energy   
-				if (corr > energy * 2.5 && energy > 1000)
+				if (corr > energy * 2.5 && energy > 50)
 				{
 					// Index 1 is a peak which exceeded the threshold
 					// -1 to refer to the previous sample
