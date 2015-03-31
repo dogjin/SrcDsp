@@ -56,11 +56,15 @@ namespace dsptl
 			for (size_t index = 0; index < history.size(); ++index)
 				history[index] = InType();
 		}
+		/// Set the gain of the upsampler in terms of left shift. The default gain is 
+		/// about 0 dB
+		void setLeftShiftBy2(int leftShiftBy2) {leftShift = leftShiftBy2;}
 		
 	private:
 		std::vector<CoefType> coeff;		///< Coefficients
 		std::vector<InType> history;  	///< History buffer
 		unsigned coeffScaling;  // Can be used to scale back the result 
+		int leftShift;          ///< Amount of left shift to perform on the decimated output related to the 0 dB
 	};
 
 
@@ -87,6 +91,7 @@ namespace dsptl
 		for (size_t index = 0; index < coeff.size(); ++index)
 			sumMagnitude += abs(coeff[index]);
 		coeffScaling = static_cast<int>(floor(log2(sumMagnitude)));
+		leftShift = 0;
 	}
 
 
@@ -155,7 +160,9 @@ namespace dsptl
 					y += coeff[k] * input[j - k];
 			}		
 			// copy the result to its destination
-			filteredSignal[outIndex++] = limitScale16(y, coeffScaling);
+			// By default, the data is scaled to provide a gain of about 0 dB
+			// A non zero value of leftShift increases the gain by 2^leftShift
+			filteredSignal[outIndex++] = limitScale16(y, coeffScaling - leftShift);
 		}
 		// We copy N-1 samples of historical data for the next iteration
 		for (int k = 0; k < N - 1; ++k)
