@@ -26,39 +26,63 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 	class _Mixer
 	{
 	public:
-		_Mixer():freq(), phi(){};
+		_Mixer():freq(), phi(), nominalFreq() {};
 		void setFrequency(float loFreq);
 		void reset(float loFreq = 0);
+		void adjustFrequency(float loFreq = 0);
 	protected:
-		PhaseType phi;		/// Phase to be used to multiply the next sample
-		PhaseType freq;    /// Frequency in radian per sample
+		PhaseType phi;		///< Phase to be used to multiply the next sample
+		PhaseType freq;    ///< Frequency in radian per sample (freq = N represents 2pi rad.samples)
+		float nominalFreq; ///< normalized frequency between -1 and 1; This is used to maintain accuracy during frequency adjustments
 		std::vector<PhaseType> ptable;   /// Sine table representing 0 to 2pi
 
 	};
 
 
-	/*-----------------------------------------------------------------------------
-	Sets the frequency in radians per sample
+	/***********************************************************************//**
+	Sets the internal frequency of the mixer
 
-	@param loFreq Frequency of the local oscillator  in normalized frequency (0 to 1)
-	------------------------------------------------------------------------------*/
+	@param loFreq Frequency of the local oscillator  in normalized frequency (-1 to 1)
+
+	***************************************************************************/
 	template<class InType, class OutType, class PhaseType, unsigned N >
 	void _Mixer<InType, OutType, PhaseType, N>::setFrequency(float loFreq)
 	{
-		freq = static_cast<PhaseType>(round(loFreq * N / 2));
+		assert(loFreq <= 1 && loFreq >= -1);
+		nominalFreq = loFreq;
+		if (loFreq >= 0)
+			freq = static_cast<PhaseType>(round(loFreq * N / 2));
+		else
+			freq = static_cast<PhaseType>(round(N - round(-loFreq * N/2) ));
+
+		assert(freq >= 0 && freq < N);
 	}
 
-	/*-----------------------------------------------------------------------------
-	Resets the state of the mixer
+	/***********************************************************************//**
+	Resets the state of the mixer. The frequency of the mixer is not affected
 
-	------------------------------------------------------------------------------*/
+	***************************************************************************/
 	template<class InType, class OutType, class PhaseType, unsigned N >
 	void _Mixer<InType, OutType, PhaseType, N>::reset(float loFreq)
 	{
 		phi = PhaseType{};
-		setFrequency(loFreq);
 	}
 
+	/***********************************************************************//**
+	Adjust the frequency of the mixer by the value provided. The adjustement is 
+	done with continuous phase.\n
+
+	@param adjustFreq Value of the adjustment in normalized frequency (-1 to +1)
+
+	***************************************************************************/
+	template<class InType, class OutType, class PhaseType, unsigned N >
+	void _Mixer<InType, OutType, PhaseType, N>::adjustFrequency(float adjustFreq)
+	{
+		nominalFreq += adjustFreq;
+		if (nominalFreq > 1) nominalFreq -= 2;
+		if (nominalFreq < -1) nominalFreq += 2;
+		setFrequency(nominalFreq);
+	}
 
 }
 
@@ -139,6 +163,14 @@ namespace dsptl
 							_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::ptable[_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::phi]), 14);
 			_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::phi = (_Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::phi + _Mixer<std::complex<int16_t>, std::complex<int16_t>, int16_t, N >::freq) % N;
 			
+#if 0
+			// Same as above without the full qualification
+			// To maintain a gain of 1 , the output scaling must correspond to the amplitude of the local oscillator
+			out[k] = limitScale16(in[k] * std::complex<int32_t>(this->ptable[(this->phi + N / 4) % N],
+							this->ptable[this->phi]), 14);
+
+			this->phi = (this->phi + this->freq) % N;
+#endif
 		}
 	}
 
