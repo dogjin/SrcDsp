@@ -18,6 +18,7 @@ Class member function: functionMember
 #include <cstdint>
 #include <complex>
 #include <vector>
+#include <limits>
 
 
 std::complex<int32_t> operator*(std::complex<int32_t> a, std::complex<int16_t> b);
@@ -25,6 +26,45 @@ std::complex<int32_t> operator*(std::complex<int16_t> a, std::complex<int32_t> b
 std::complex<int32_t> scale32(std::complex<int32_t> z, unsigned shift);
 std::complex<uint32_t> scale32(std::complex<uint32_t> z, unsigned shift);
 std::complex<int16_t> limitScale16(std::complex<int32_t> z, unsigned shift);
+
+
+/***************************************************************************//**
+Apply the specified right shift to the complex z then limit the real part and
+imaginary part of z to the maximum value of the type of the output complex.\n
+
+This routine is only applicable when both the input and output complex types are
+integers.
+
+
+*******************************************************************************/
+template <class T, class U>
+std::complex<T> limitScale(std::complex<U> z, unsigned shift)
+{
+	// Verify that we are working with complex of integers value.
+	static_assert(std::numeric_limits<U>::is_integer && std::numeric_limits<T>::is_integer, "");
+	// Verify that U has at least as many bits than T
+	static_assert(std::numeric_limits<U>::digits >= std::numeric_limits<T>::digits, "");
+	U a, b;
+
+	a = z.real() >> shift;
+	// Limit the real part
+	if (a > std::numeric_limits<T> :: max() )
+		a = std::numeric_limits<T> :: max();
+	else if (a < std::numeric_limits<T>::lowest())
+		a = std::numeric_limits<T> :: lowest();
+
+	b = z.imag() >> shift;
+	// Limit the imaginary part
+	if (b > std::numeric_limits<T> :: max() )
+		b = std::numeric_limits<T> :: max();
+	else if (b < std::numeric_limits<T>::lowest())
+		b = std::numeric_limits<T> :: lowest();
+
+	return std::complex<T>(a,b);
+
+}
+
+
 
 #if 0
 

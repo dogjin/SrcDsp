@@ -18,10 +18,8 @@ Class member function: functionMember
 
 #include <cassert>
 #include <vector>
+#include "dsp_complex.h"
 
-
-// Uncomment the following line to include the C++ specific syntax
-//#define CPLUSPLUS11
 
 
 /*-----------------------------------------------------------------------------
@@ -59,6 +57,7 @@ private:
 	std::vector<CoefType> coeff;		///< Coefficients
 	std::vector<InType> buffer;  	///< History buffer
 	unsigned top; 				///< Current insertion point in the history buffer 
+	int leftShiftFactor;
 };
 
 
@@ -81,8 +80,10 @@ FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::FilterUpsamplin
 	// The internal history buffer is sized according to the 
 	// number of coefficients
 	buffer.resize(firCoeff.size() / L);
-}
+	// Compute the scaling factor
+	leftShiftFactor = static_cast<int>(round(log2(L)));
 
+}
 
 
 /*-----------------------------------------------------------------------------
@@ -112,7 +113,7 @@ void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const
 	assert(signal.size() * L  == filteredSignal.size());
 	#endif
 
-	OutType y;  				// Output result
+	InternalType y;  				// Output result
 	unsigned  n;				// Counting indexes
 	size_t histSize = buffer.size();	// Number of taps in the filter
 	size_t inputSize = signal.size();	// Number of input samples
@@ -141,7 +142,12 @@ void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const
 				y += coeff[n]* buffer[k];
 			}
 
-			filteredSignal[L*j + offset] = static_cast<OutType>(y);
+			
+			
+			//filteredSignal[L*j + offset] = static_cast<OutType>(y);
+
+			//filteredSignal[L*j + offset] = limitScale16(y,  15 - leftShiftFactor);
+			filteredSignal[L*j + offset] = limitScale<OutType::value_type, InternalType::value_type>(y,  15 - leftShiftFactor);
 		}
 		top++;
 		if(top >= histSize) top = 0;
