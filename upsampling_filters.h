@@ -147,7 +147,7 @@ void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const
 			//filteredSignal[L*j + offset] = static_cast<OutType>(y);
 
 			//filteredSignal[L*j + offset] = limitScale16(y,  15 - leftShiftFactor);
-			filteredSignal[L*j + offset] = limitScale<OutType::value_type, InternalType::value_type>(y,  15 - leftShiftFactor);
+			filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y,  15 - leftShiftFactor);
 		}
 		top++;
 		if(top >= histSize) top = 0;
