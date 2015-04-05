@@ -13,13 +13,19 @@ Class member function: functionMember
 
 ------------------------------------------------------------------------------*/
 
+#ifndef DSPTL_MODULATORS_H
+#define DSPTL_MODULATORS_H
+
+
 #include <complex>
 #include <cstdint>
+#include <vector>
+#include <cassert>
 
 namespace dsptl_private
 {
 	/*-----------------------------------------------------------------------------
-	Modulator nominal vlaues for different type of output
+	Modulator nominal values for different type of output
 
 	------------------------------------------------------------------------------*/
 	template<class T>
@@ -195,4 +201,5 @@ namespace dsptl
 
 }
 
+#endif
 
