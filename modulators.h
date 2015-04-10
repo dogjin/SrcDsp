@@ -155,10 +155,10 @@ namespace dsptl
 			T amplitude;
 			amplitude = dsptl_private::ModAmplitude < T > {}.value;
 			// Create the constellation map Gray encoding is used
-			map[0] = { amplitude, amplitude };
-			map[1] = { static_cast<T>(-amplitude), amplitude };
-			map[3] = {  static_cast<T>(-amplitude),  static_cast<T>(-amplitude) };
-			map[2] = { amplitude,  static_cast<T>(-amplitude) };
+			map[0] = { static_cast<T>(-amplitude), static_cast<T>(-amplitude)};
+			map[1] = { static_cast<T>(-amplitude), static_cast<T>(amplitude) };
+			map[3] = {  static_cast<T>(amplitude),  static_cast<T>(amplitude) };
+			map[2] = {  static_cast<T>(amplitude) ,  static_cast<T>(-amplitude) };
 
 			reset();
 
