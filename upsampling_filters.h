@@ -55,18 +55,27 @@ namespace dsptl
 			for (size_t index = 0; index < buffer.size(); ++index)
 				buffer[index] = InType();
 		}
-		// Return the number of coefficients
-		int getLength() {
+		// Return the number of coefficients excluding zero coefficients at the end
+		int getLength() const {
 			return length;
+		}
+		// Return the number of coefficients including any zero coefficients at the end
+		int getImpLength() const {
+			return impLength;
+		}
+		/// Return the upsampling ratio implemented by the filter
+		int getUpsamplingRatio() const {
+			return L;
 		}
 
 
 	private:
 		std::vector<CoefType> coeff;		///< Coefficients
 		std::vector<InType> buffer;  	///< History buffer
-		unsigned top; 				///< Current insertion point in the history buffer 
-		int leftShiftFactor;
-		unsigned length;					///< Number of coefficients of the filter excluding the null coeff at the end
+		unsigned top; 					///< Current insertion point in the history buffer 
+		int leftShiftFactor;			///< Number of left shifts to operate on the output. This is linked to the upsampling ratio
+		unsigned length;				///< Number of coefficients of the filter excluding the null coeff at the end
+		unsigned impLength;				///< Number of coefficients of the filter including the null coeff at the end
 	};
 
 
@@ -81,7 +90,7 @@ namespace dsptl
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
 	FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::FilterUpsamplingFir(const std::vector<CoefType> &firCoeff )
-		:  top(0)
+		: top(0), length(0), impLength(0)
 	{
 		if (!firCoeff.empty())
 			setCoefficients(firCoeff);			
@@ -111,9 +120,8 @@ namespace dsptl
 		buffer.resize(firCoeff.size() / L);
 		// Compute the scaling factor
 		leftShiftFactor = static_cast<int>(round(log2(L)));
-		// Compute the length of the filter. i.e. the numbers of coefficients
-		// excluding the zero coefficients at the end.
-		length = coeff.size();
+		// Compute the length of the filter. i.e. the numbers of coefficientss
+		length = impLength = coeff.size();
 		while (coeff[length -1 ] == 0) --length ;
 
 
@@ -145,7 +153,8 @@ namespace dsptl
 #ifdef CPLUSPLUS11
 		static_assert(signal.size() * L == filteredSignal.size(), "");
 #else
-		assert(signal.size() * L == filteredSignal.size());
+		if (!flush)
+			assert(signal.size() * L == filteredSignal.size());
 #endif
 		assert(!coeff.empty());
 
@@ -192,7 +201,8 @@ namespace dsptl
 
 		if (flush)
 		{
-			for (unsigned j = 0; j < length; j++)
+			// We flush with length / L zeros
+			for (unsigned j = inputSize; j < (inputSize + length / L); j++)
 			{
 				// This loop is executed for each of the input samples
 				buffer[top] = InType{};
