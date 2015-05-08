@@ -100,7 +100,7 @@ namespace dsptl
 
 		/// Performs the modulation as required.
 		/// The input bits can be either 0,1 or -1,1
-		void step(const std::vector<int8_t> & bits , std::vector<std::complex<T> > & out)
+		void step(const std::vector<uint8_t> & bits , std::vector<std::complex<T> > & out)
 		{
 			const int N = 4;
 			assert(bits.size() == out.size());
@@ -166,7 +166,7 @@ namespace dsptl
 
 		/// Performs the modulation as required
 		/// The bits vector can either consists of 0, 1 or -1, 1
-		void step(const std::vector<int8_t> & bits , std::vector<std::complex<T> > & out)
+		void step(const std::vector<uint8_t> & bits , std::vector<std::complex<T> > & out)
 		{
 			const int N = 4;
 			assert(bits.size() == 2 * out.size());
