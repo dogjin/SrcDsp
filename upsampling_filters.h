@@ -1,17 +1,14 @@
-/*-----------------------------------------------------------------------------
+/***********************************************************************//**
 @file 
 
 Definition of all DSP routines related to mutlirate filters
 performing an upconversion.
 
-The naming conventions are as follows:
-Class names: ClassName
-Class member data : dataMember
-Class member function: functionMember
+@author Thierry Guichon
+@date 2015
+@copyright ORBCOMM
 
-
-
-------------------------------------------------------------------------------*/
+***************************************************************************/
 
 #ifndef DSPTL_UPSAMPLING_FILTER_FIR_H
 #define DSPTL_UPSAMPLING_FILTER_FIR_H
@@ -23,10 +20,9 @@ Class member function: functionMember
 namespace dsptl
 {
 
-	/*-----------------------------------------------------------------------------
-	FIR Filter
-
-
+	/***********************************************************************//**
+	Upsampling FIR filter
+	
 	@tparam InType Type of the input signal. Can be float, double, complex, int...
 	@tparam OutType Type of the output signal
 	@tparam InternalType Type used internally for the computation
@@ -36,7 +32,7 @@ namespace dsptl
 	It is the responsibility of the caller to make sure that the different types
 	work smoothly. Overflow and underflow conditions must not occur
 
-	------------------------------------------------------------------------------*/
+	***************************************************************************/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
 	class FilterUpsamplingFir
 	{
@@ -48,18 +44,18 @@ namespace dsptl
 		void setCoefficients(const std::vector<CoefType> &firCoeff);
 		// This function is called for each iteration of the filtering process
 		void step(const std::vector<InType> & signal, std::vector<OutType> & filteredSignal, bool flush = false);
-		// Reset the internal counters and buffers
+		/// Reset the internal counters and buffers
 		void reset()
 		{
 			top = 0;
 			for (size_t index = 0; index < buffer.size(); ++index)
 				buffer[index] = InType();
 		}
-		// Return the number of coefficients excluding zero coefficients at the end
+		/// Return the number of coefficients excluding zero coefficients at the end
 		int getLength() const {
 			return length;
 		}
-		// Return the number of coefficients including any zero coefficients at the end
+		/// Return the number of coefficients including any zero coefficients at the end
 		int getImpLength() const {
 			return impLength;
 		}
@@ -79,7 +75,7 @@ namespace dsptl
 	};
 
 
-	/*-----------------------------------------------------------------------------
+	/***********************************************************************//**
 	Upsampling FIR Filter Default Constructor
 
 	If coefficients are provided, the constructor initializes the internal coefficient table
@@ -87,7 +83,7 @@ namespace dsptl
 
 	@param firCoeff Filter Coefficients
 
-	------------------------------------------------------------------------------*/
+	***************************************************************************/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
 	FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::FilterUpsamplingFir(const std::vector<CoefType> &firCoeff )
 		: top(0), length(0), impLength(0)
@@ -97,7 +93,7 @@ namespace dsptl
 
 	}
 
-	/*-----------------------------------------------------------------------------
+	/***********************************************************************//**
 	Upsampling FIR Filter Constructor
 
 	Initializes the internal coefficient table and creates the internal
@@ -105,7 +101,7 @@ namespace dsptl
 
 	@param firCoeff Filter Coefficients
 
-	------------------------------------------------------------------------------*/
+	***************************************************************************/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
 	void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::setCoefficients(const std::vector<CoefType> &firCoeff)
 	{
@@ -128,7 +124,7 @@ namespace dsptl
 	}
 
 
-	/*-----------------------------------------------------------------------------
+	/***********************************************************************//**
 	Upsampling FIR Filter
 
 	The algorithm uses an internal buffer with a length equal to the number of coefficients
@@ -146,7 +142,7 @@ namespace dsptl
 	@param filteredSignal Output of the filter. Must be the same size as signal
 	@param flush If true the history buffer is fully flushed in the output buffer
 
-	------------------------------------------------------------------------------*/
+	***************************************************************************/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
 	void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const std::vector<InType> & signal, std::vector<OutType> & filteredSignal, bool flush)
 	{
