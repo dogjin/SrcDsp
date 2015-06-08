@@ -1,3 +1,16 @@
+/***********************************************************************//**
+@file
+
+Definition of all objects and utilities related to buffers. \n
+This include specialized buffers like fifos or queues
+
+@author Thierry Guichon
+@date 2015
+@copyright ORBCOMM
+
+***************************************************************************/
+
+
 #ifndef DSP_BUFFERS_H
 #define DSP_BUFFERS_H
 
@@ -12,34 +25,27 @@
 namespace dsptl
 {
 
-/******************************************************************************
- * @file
- *
- * Definition of all objects and utilities related to buffers. \n
- * This include specialized buffers like fifos or queues
- *
- * ***************************************************************************/
 
+/***********************************************************************//**
+FIFO where the write always write. There is no notion of being full
+as far as write is concerned.\n
+The read occurs at the location specified in the read call.\n
+The buffer keeps a time index which relates to the aboslute time at which the value was collected.
+ This time index rolls over when it has
+exceeded its maximum value (this is a 64 bit unsigned)\n
 
-/******************************************************************************
- * FIFO where the write always write. There is no notion of being full
- * as far as write is concerned.\n
- * The read occurs at the location specified in the read call.\n
- * The buffer keeps a time index which relates to the aboslute time
- * at which the value was collected. This time index rolls over when it has
- * exceeded its maximum value (this is a 64 bit unsigned)\n
- *
- * The number of values added into the fifo in a single write opertion
- * MUST BE LESS than the size of the FIFO
- *
- * The class is meant to work with one thread which calls read and one
- * thread which calls write. The read and the write are assumed to access
- * different parts of the fifo.
- *
- * @tparam T Type of the values stored in the buffer
- * @tparam N Number of elements stored in the FIFO
- *
- * ***************************************************************************/
+The number of values added into the fifo in a single write operation
+MUST BE LESS than the size of the FIFO
+
+The class is meant to work with one thread which calls read() and one
+thread which calls write(). The read and the write are assumed to access
+different parts of the fifo.
+
+@tparam T Type of the values stored in the buffer
+@tparam N Number of elements stored in the FIFO
+
+***************************************************************************/
+
 template <class T, size_t N>
 class FifoWithTimeTrack
 {
@@ -109,7 +115,6 @@ void FifoWithTimeTrack<T,N>::write(std::vector<T> & in)
 	size_t inSize = in.size();
 	assert(inSize < N);
 
-	// The data copying is not in the critical section because
 	// The data copying is not in the critical section because
 	// it is assumed that different sections of the vector are
 	// accessed by the different threads
@@ -290,7 +295,7 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 }
 
 /******************************************************************************
- * Reset the state of the fifo. Internal values are not cleared.\n
+ * Return the number of values currently stored in the FIFO.\n
  * 
  * ***************************************************************************/
 
