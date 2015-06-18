@@ -20,6 +20,7 @@ This include specialized buffers like fifos or queues
 #include <iostream>
 #include <cassert>
 #include <iterator>
+#include <utility>
 #include "pthread.h"
 
 namespace dsptl
@@ -30,9 +31,16 @@ namespace dsptl
 FIFO where the write always write. There is no notion of being full
 as far as write is concerned.\n
 The read occurs at the location specified in the read call.\n
-The buffer keeps a time index which relates to the aboslute time at which the value was collected.
- This time index rolls over when it has
-exceeded its maximum value (this is a 64 bit unsigned)\n
+
+The buffer keeps a timePoint value which relates to the aboslute time at which the value was collected.
+The timePoint is a 64 bits unsigned integer. At a sampling rate of 38400 sps it will roll over in
+many centuries, consequently the roll-over of the timePoint is not fully implemented
+(Partial implementation can be seen but this not fully operational).\n
+
+
+The correspondance between the time index and the absolute system time can be 
+retrieved by calling getAbsoluteTime(). This only works if the sampling
+frequency in Hz was correcty passed to the constructor.
 
 The number of values added into the fifo in a single write operation
 MUST BE LESS than the size of the FIFO
@@ -41,8 +49,8 @@ The class is meant to work with one thread which calls read() and one
 thread which calls write(). The read and the write are assumed to access
 different parts of the fifo.
 
-@tparam T Type of the values stored in the buffer
-@tparam N Number of elements stored in the FIFO
+ @tparam T Type of the values stored in the buffer
+ @tparam N Number of elements stored in the FIFO
 
 ***************************************************************************/
 
@@ -51,14 +59,14 @@ class FifoWithTimeTrack
 {
 public:
 	// Constructor
-	FifoWithTimeTrack():
-	writePtr(0), timeStart(0), timeEnd(0), rolloverFlag(false), storage(N)
+	FifoWithTimeTrack(double samplingFrequencyArg = 0):
+	writePtr(0), timeStart(0), timeEnd(0), rolloverFlag(false), storage(N), samplingFrequency(samplingFrequencyArg)
 	{ pthread_mutex_init(&mx, nullptr);}
 	// Destructor
 	~FifoWithTimeTrack()
 	{ pthread_mutex_destroy(&mx);}
 	// Write values at the back of the fifo
-	void write(std::vector<T>& in);
+	void write(std::vector<T>& in, unsigned int seconds = 0 , double fracSeconds = 0);
 	// Return the desired value in the provided buffer
 	bool  read(std::vector<T>& out, uint64_t & start);
 	// Return the number of values currently stored in the FIFO
@@ -69,11 +77,13 @@ public:
 	/// Write debugging info to the standard output
 	// This is mainly for debuggin purposes
 	void dumpInfo(bool dumpData = false) ;
+	/// Returns the absolute time associated with a timePoint value and a fraction of a timePoint
+	std::pair<unsigned int, double> getAbsoluteTime(uint64_t timePoint, double fracTimePoint);
 
 private:
 	// Location to write the next value
 	size_t writePtr;
-	// Time index of the earliest value wavailable in the buffer
+	// Time index of the earliest value available in the buffer
 	uint64_t timeStart;
 	// Time index of the latest value available in the buffer
 	uint64_t timeEnd;
@@ -82,6 +92,9 @@ private:
 	bool rolloverFlag;
 	// FIFO storage
 	std::vector<T> storage;
+	// Sampling frequency. This is used purely to return a sample
+	// time if required
+	double samplingFrequency;
 	// Mutex used for contention prevention
 	pthread_mutex_t mx;
 	// Guarded lock
@@ -94,22 +107,31 @@ private:
 	private:
 		pthread_mutex_t * _mx;
 	};
+	
+	// Struture which associates an absolute time with a sample number
+	struct timeReference_t
+	{
+		uint64_t timePoint;
+		std::pair<unsigned int , double> absoluteTime;
+	} timeReference;
+
+
 };
 
 
-/******************************************************************************
- * Write the elements in the provided vector in the fifo
- *
- * @param in vector of elements to write. Any existing data is overwritten. The input
- * size must be less than the size of the fifo
- *
- * A true rollover flag indicates that the timeEnd has rolled over but that the
- * time start has not rolled over yet.
- * 
- * 
- * ***************************************************************************/
+/***********************************************************************//**
+Write the elements in the provided vector in the fifo
+
+ @param in vector of elements to write. Any existing data is overwritten. The input
+size must be less than the size of the fifo
+
+A true rollover flag indicates that the timeEnd has rolled over but that the
+time start has not rolled over yet.
+
+
+***************************************************************************/
 template <class T, size_t N>
-void FifoWithTimeTrack<T,N>::write(std::vector<T> & in)
+void FifoWithTimeTrack<T,N>::write(std::vector<T> & in, unsigned int seconds, double fracSeconds)
 {
 	size_t upToTop = N - writePtr; // Nbr locations until top
 	size_t inSize = in.size();
@@ -135,8 +157,23 @@ void FifoWithTimeTrack<T,N>::write(std::vector<T> & in)
 	// Update writePtr
 	writePtr = (writePtr + inSize) % N;
 
+	// Difference between the current timePoint value and its maximum value
+	uint64_t diff = UINT64_MAX - timeEnd;
+	
+	// The case when timeEnd has reached the maximum time point value is ignored
+
+	// We associate the time of the first sample we just receive with the
+	// timePoint one above the current timeEnd.
+	timeReference.timePoint = timeEnd + 1 ;
+	timeReference.absoluteTime.first = seconds;
+	timeReference.absoluteTime.second = fracSeconds;
+
+	
+	// We associate the time passed as parameter with the location of the first
+	// sample written during this write
+	
+
 	// The time index of the most recent value is updated
-	uint64_t diff = UINT64_MAX - timeEnd;	if(diff >= inSize)
 	if(diff >= inSize)
 		// timeEnd can be incremented safely
 		timeEnd += inSize;
@@ -177,12 +214,12 @@ void FifoWithTimeTrack<T,N>::write(std::vector<T> & in)
 }
 
 
-/******************************************************************************
- * Write the internal state of the fifo to the standard output
- *
- * @param data Flag indicating wherther the elements are dumped or not
- * 
- * ***************************************************************************/
+/***********************************************************************//**
+Write the internal state of the fifo to the standard output
+
+ @param data Flag indicating wherther the elements are dumped or not
+
+***************************************************************************/
 template <class T, size_t N>
 void FifoWithTimeTrack<T,N>::dumpInfo(bool dumpData) 
 {
@@ -206,10 +243,10 @@ void FifoWithTimeTrack<T,N>::dumpInfo(bool dumpData)
 	// ------ CRITICAL SECTION END -------
 }
 
-/******************************************************************************
- * Reset the state of the fifo. Internal values are not cleared.\n
- * 
- * ***************************************************************************/
+/***********************************************************************//**
+Reset the state of the fifo. Internal values are not cleared.\n
+
+***************************************************************************/
 
 template <class T, size_t N>
 void FifoWithTimeTrack<T,N>::reset()
@@ -228,19 +265,20 @@ void FifoWithTimeTrack<T,N>::reset()
 	// ------ CRITICAL SECTION END -------
 }
 
-/******************************************************************************
- * Retrieves a range of values from the FIFO. The first value is the value
- * associated with the start timestamp. The number of values is indicated by
- * the size of the vector passed as parameter.
- *
- * param out vector in which the values retrieved will be stored
- * param start timestamp of the first value. If this value is zero, 
- * the buffer is filled with the first value available and the value of
- * start is updated approprietly
- *
- * @return true if no error, false otherwise
- *
- * ***************************************************************************/
+/***********************************************************************//**
+Retrieves a range of values from the FIFO. The first value is the value
+associated with the start timestamp. The number of values is indicated by
+the size of the vector passed as parameter.
+
+ @param out vector in which the values retrieved will be stored
+ @param start timestamp of the first value. If this value is zero, 
+the buffer is filled with the first value available and the value of
+start is updated approprietly
+
+ @return true an error occurred (for example if the requested start is outside
+ the available range), false if no error.
+
+*****************************************************************************/
 template <class T, size_t N>
 bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 {
@@ -294,10 +332,10 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 	}
 }
 
-/******************************************************************************
- * Return the number of values currently stored in the FIFO.\n
- * 
- * ***************************************************************************/
+/***********************************************************************//**
+Return the number of values currently stored in the FIFO.\n
+
+***************************************************************************/
 
 template <class T, size_t N>
 size_t  FifoWithTimeTrack<T,N>::count()
@@ -319,8 +357,94 @@ size_t  FifoWithTimeTrack<T,N>::count()
 }
 
 
-} // End of dsptl namespace
+/***********************************************************************//**
+Return a number of seconds and fractional seconds associated with the time point
+and the fractional timePoint specified as parameter. 
 
+ @param timePoint Indicate at what point in time the time should be computed.
+ The timePoint value is typically between timeStart and timeEnd although it may
+ occasionally be beyond these limits.
+ @param fracTimePoint Fractional time point. This indicates that the time that we
+ want lies between two samples.
+ 
+ @return A pair of values where the first value is the number of full seconds and the
+ second number is the fractional second.
+ 
+ The routine does not verified if the timePoint is between timeStart and timeEnd, but
+ it will give its best estimate of the time
+***************************************************************************/
+
+template <class T, size_t N>
+std::pair<unsigned int, double> FifoWithTimeTrack<T,N>::getAbsoluteTime(uint64_t timePoint, double fracTimePoint)
+{
+
+	// Set to 1 to enable information to be displayed on the standard output
+	#define GET_ABSOLUTE_TIME_DEBUG_INFO 1
+	
+	unsigned int seconds = 0U;
+	double fracSeconds = 0.0;
+	
+
+	// ------ CRITICAL SECTION START -------
+	{
+		lock_guard lck(&mx);
+		
+		#if GET_ABSOLUTE_TIME_DEBUG_INFO
+		std::cout << "\nFunction call getAbsoluteTime: \n";
+		std::cout << "\tInput timePoint: " <<  timePoint << " fracTimePoint: " << fracTimePoint << '\n';
+		std::cout << "\tReference timePoint: " << timeReference.timePoint 
+					<< " Absolute Time seconds: " << timeReference.absoluteTime.first
+					<< " Absolute Time fracSeconds: " << timeReference.absoluteTime.seconds << '\n';
+		#endif
+		
+		// How far are we from the reference time point in number of samples
+		int delta = timeReference.timePoint - timePoint;
+		// Compute the difference in seconds. It is assumed that the difference is 
+		// small enough so that not loss of precision occurs
+		double deltaTime = (delta - fracTimePoint) / samplingFrequency;
+		// The following arithmetic assumes that delta is smaller than the number of
+		// seconds in timeReference.time.first
+		if (deltaTime >= 0 )
+		{
+			auto deltaFullSeconds = static_cast<int>(floor(deltaTime));
+			auto deltaFracSeconds = deltaTime - deltaFullSeconds;
+			seconds = timeReference.absoluteTime.first + deltaFullSeconds;
+			fracSeconds = timeReference.absoluteTime.second + deltaFracSeconds;
+			if (fracSeconds >= 1)
+				{
+					++seconds;
+					fracSeconds -= 1;
+				} 
+
+		}
+		else
+		{
+			auto deltaFullSeconds = static_cast<int>(floor(deltaTime));
+			auto deltaFracSeconds = deltaTime - deltaFullSeconds;
+			seconds = timeReference.absoluteTime.first + deltaFullSeconds;
+			fracSeconds = timeReference.absoluteTime.second + deltaFracSeconds;
+			if (fracSeconds >= 1)
+				{
+					++seconds;
+					fracSeconds -= 1;
+				} 				
+		}
+	}	
+
+	// ------ CRITICAL SECTION END -------
+	
+	#if GET_ABSOLUTE_TIME_DEBUG_INFO
+	std::cout << "\tOutput seconds: " <<  seconds << " fracSeconds: " << fracSeconds << '\n';
+	#endif
+
+	
+	return 	std::make_pair(seconds, fracSeconds);
+
+}
+
+
+
+} // End of dsptl namespace
 
 #endif
 
