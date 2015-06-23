@@ -394,7 +394,7 @@ std::pair<unsigned int, double> FifoWithTimeTrack<T,N>::getAbsoluteTime(uint64_t
 		std::cout << "\tInput timePoint: " <<  timePoint << " fracTimePoint: " << fracTimePoint << '\n';
 		std::cout << "\tReference timePoint: " << timeReference.timePoint 
 					<< " Absolute Time seconds: " << timeReference.absoluteTime.first
-					<< " Absolute Time fracSeconds: " << timeReference.absoluteTime.seconds << '\n';
+					<< " Absolute Time fracSeconds: " << timeReference.absoluteTime.second << '\n';
 		#endif
 		
 		// How far are we from the reference time point in number of samples
