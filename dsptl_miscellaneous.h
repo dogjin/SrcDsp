@@ -134,6 +134,29 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 
 }
 
+namespace dsptl
+{
+
+/**************************************************************************//**
+
+Convert a frequency value given in rad per samples into a value in Hd           
+******************************************************************************/
+double toFreqHz(double freqRadPerSample, double samplingFreqHz)
+{
+	return freqRadPerSample / 2.0 / dsptl::pi * samplingFreqHz;
+}
+
+/**************************************************************************//**
+Convert a frequency value given in Hz into a value in radians per sample        
+******************************************************************************/	
+double toFreqRadPerSample(double freqHz, double samplingFreqHz)
+{
+	return 2.0 * dsptl::pi * freqHz / samplingFreqHz;
+}
+	
+}
+
+
 
 
 #endif

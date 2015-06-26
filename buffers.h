@@ -38,9 +38,9 @@ many centuries, consequently the roll-over of the timePoint is not fully impleme
 (Partial implementation can be seen but this not fully operational).\n
 
 
-The correspondance between the time index and the absolute system time can be 
+The correspondence between the time index and the absolute system time can be 
 retrieved by calling getAbsoluteTime(). This only works if the sampling
-frequency in Hz was correcty passed to the constructor.
+frequency in Hz was correctly passed to the constructor.
 
 The number of values added into the fifo in a single write operation
 MUST BE LESS than the size of the FIFO
