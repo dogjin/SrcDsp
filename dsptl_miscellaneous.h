@@ -1,14 +1,13 @@
-/**************************************************************************//**
+/***********************************************************************//**
 @file
 
-Defintion of miscellaneous routines and classes to supporth the dsptl library
+Miscellaneous utilities for signal processing applications
 
-The naming conventions are as follows:
-Class names: ClassName
-Class member data : dataMember
-Class member function: functionMember
+@author Thierry Guichon
+@date 2015
+@copyright ORBCOMM
 
-******************************************************************************/
+***************************************************************************/
 
 
 #ifndef DSPTL_MISCELLANEOUS_H
@@ -19,6 +18,8 @@ Class member function: functionMember
 #include <ostream>
 #include <sstream>
 #include <iomanip>
+#include "constants.h"
+#include <vector>
 
 /**************************************************************************//**
 Estimate the frequency in radians per samples of a sequence of complex values\n
@@ -137,22 +138,11 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 namespace dsptl
 {
 
-/**************************************************************************//**
+// Convert a frequency value given in rad per samples into a value in Hd           
+double toFreqHz(double freqRadPerSample, double samplingFreqHz);
 
-Convert a frequency value given in rad per samples into a value in Hd           
-******************************************************************************/
-double toFreqHz(double freqRadPerSample, double samplingFreqHz)
-{
-	return freqRadPerSample / 2.0 / dsptl::pi * samplingFreqHz;
-}
-
-/**************************************************************************//**
-Convert a frequency value given in Hz into a value in radians per sample        
-******************************************************************************/	
-double toFreqRadPerSample(double freqHz, double samplingFreqHz)
-{
-	return 2.0 * dsptl::pi * freqHz / samplingFreqHz;
-}
+// Convert a frequency value given in Hz into a value in radians per sample        
+double toFreqRadPerSample(double freqHz, double samplingFreqHz);
 	
 }
 
