@@ -21,6 +21,7 @@ Class member function: functionMember
 #include <cstdint>
 #include <fstream>
 #include <cassert>
+#include "dsp_complex.h"
 
 
 //#define CREATE_DEBUG_FILES
