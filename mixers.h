@@ -53,7 +53,12 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 		if (loFreq >= 0)
 			freq = static_cast<PhaseType>(round(loFreq * N / 2));
 		else
-			freq = static_cast<PhaseType>(round(N - round(-loFreq * N/2) ));
+		{
+			freq = static_cast<PhaseType>(round(N - round(-loFreq * N / 2)));
+			// For very small negative values of loFreq, freq becomes 4096
+			// We force it to the equivalent value of 0
+			if (freq == N) freq = 0;
+		}
 
 		assert(freq >= 0 && freq < N);
 	}
