@@ -379,9 +379,9 @@ std::pair<unsigned int, double> FifoWithTimeTrack<T,N>::getAbsoluteTime(uint64_t
 {
 
 	// Set to 1 to enable information to be displayed on the standard output
-	#define GET_ABSOLUTE_TIME_DEBUG_INFO 1
+	#define GET_ABSOLUTE_TIME_DEBUG_INFO 0
 	
-	unsigned int seconds = 0U;
+	uint32_t seconds = 0U;
 	double fracSeconds = 0.0;
 	
 
@@ -397,41 +397,38 @@ std::pair<unsigned int, double> FifoWithTimeTrack<T,N>::getAbsoluteTime(uint64_t
 					<< " Absolute Time fracSeconds: " << timeReference.absoluteTime.second << '\n';
 		#endif
 		
-		// How far are we from the reference time point in number of samples
-		int delta = timeReference.timePoint - timePoint;
-		// Compute the difference in seconds. It is assumed that the difference is 
-		// small enough so that not loss of precision occurs
-		double deltaTime = (delta - fracTimePoint) / samplingFrequency;
-		// The following arithmetic assumes that delta is smaller than the number of
-		// seconds in timeReference.time.first
-		if (deltaTime >= 0 )
-		{
-			auto deltaFullSeconds = static_cast<int>(floor(deltaTime));
-			auto deltaFracSeconds = deltaTime - deltaFullSeconds;
-			seconds = timeReference.absoluteTime.first + deltaFullSeconds;
-			fracSeconds = timeReference.absoluteTime.second + deltaFracSeconds;
-			if (fracSeconds >= 1)
-				{
-					++seconds;
-					fracSeconds -= 1;
-				} 
-
-		}
+		// Compute the time difference between timePoint and the timePoint of the reference
+		int64_t sampleDiff = timePoint - timeReference.timePoint;
+		//std::cout << "Samplediff " << sampleDiff << '\n';
+		double timeDiff = sampleDiff / samplingFrequency;
+		//std::cout << "TimeDiff " << timeDiff << '\n';
+		auto timeDiffInt = static_cast<int32_t>(floor(timeDiff));
+		//std::cout << "timeDiffInt " << timeDiffInt << '\n';		
+		// TimeDiffFrac is the positive difference between the floored value and the inial value
+		double timeDiffFrac = timeDiff - floor(timeDiff);
+		//std::cout << "timeDiffFrac " << timeDiffFrac << '\n';			
+		assert(timeDiffFrac >= 0);
+		// Compute the integer part of the number of seconds
+		seconds = timeReference.absoluteTime.first + timeDiffInt;
+		//std::cout << "seconds " << seconds << '\n';			
+		
+		// Compute the fractional seconds
+		if(sampleDiff >= 0)
+			fracSeconds = timeReference.absoluteTime.second + timeDiffFrac + (fracTimePoint / samplingFrequency);
 		else
-		{
-			auto deltaFullSeconds = static_cast<int>(floor(deltaTime));
-			auto deltaFracSeconds = deltaTime - deltaFullSeconds;
-			seconds = timeReference.absoluteTime.first + deltaFullSeconds;
-			fracSeconds = timeReference.absoluteTime.second + deltaFracSeconds;
-			if (fracSeconds >= 1)
-				{
-					++seconds;
-					fracSeconds -= 1;
-				} 				
-		}
-	}	
+			fracSeconds = timeReference.absoluteTime.second + timeDiffFrac + (fracTimePoint / samplingFrequency);
+		//std::cout << "fracSeconds " << fracSeconds << '\n';			
+		
+		assert(fracSeconds >= 0);
+		
+		// We adjust the values to make sure that the fractional part is between 0 and 1
+		auto tmp = static_cast<int32_t>(fracSeconds);
+		fracSeconds -= tmp;
+		seconds += tmp;
 
+	}
 	// ------ CRITICAL SECTION END -------
+
 	
 	#if GET_ABSOLUTE_TIME_DEBUG_INFO
 	std::cout << "\tOutput seconds: " <<  seconds << " fracSeconds: " << fracSeconds << '\n';
