@@ -287,6 +287,11 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 	// Error if the range requested is beyond the existing range
 	assert(out.size() != 0);
 
+	// Local pointers to the buffers indicating the first and the last
+	// sample to read. The pointers make a closed range.
+	size_t startPtr;  
+	size_t endPtr ;  
+	
 	// The block below is intended to clearly define the critical section
 	{
 		// ------ CRITICAL SECTION START -------
@@ -300,8 +305,8 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 		// The code below is only performed if the timeStart and timeEnd
 		// were correct
 		size_t end = start + out.size() - 1;
-		size_t startPtr = (writePtr + N - (timeEnd - start) - 1 ) % N;  
-		size_t endPtr  = (writePtr + N - (timeEnd - end) - 1) % N;  
+		startPtr = (writePtr + N - (timeEnd - start) - 1 ) % N;  
+		endPtr  = (writePtr + N - (timeEnd - end) - 1) % N;  
 		//std::cout << "WritePtr " << writePtr << '\n';
 		//std::cout << "TimeEnd " << timeEnd << '\n';
 		//std::cout << "Start " << start << '\n';
