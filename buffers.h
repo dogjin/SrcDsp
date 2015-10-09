@@ -108,7 +108,9 @@ private:
 		pthread_mutex_t * _mx;
 	};
 	
-	// Struture which associates an absolute time with a sample number
+	/// Struture which associates an absolute time with a sample number
+	/// The absolute time is represented by the number of seconds and the
+	/// number of fractional seconds
 	struct timeReference_t
 	{
 		uint64_t timePoint;
@@ -124,6 +126,9 @@ Write the elements in the provided vector in the fifo
 
  @param in vector of elements to write. Any existing data is overwritten. The input
 size must be less than the size of the fifo
+@param seconds Absolute time of the first sample of the buffer in seconds
+@param fracSeconds Fractional seconds part of the absolute time of the first
+sample of the in buffer. 
 
 A true rollover flag indicates that the timeEnd has rolled over but that the
 time start has not rolled over yet.
@@ -168,10 +173,6 @@ void FifoWithTimeTrack<T,N>::write(std::vector<T> & in, unsigned int seconds, do
 	timeReference.absoluteTime.first = seconds;
 	timeReference.absoluteTime.second = fracSeconds;
 
-	
-	// We associate the time passed as parameter with the location of the first
-	// sample written during this write
-	
 
 	// The time index of the most recent value is updated
 	if(diff >= inSize)
@@ -285,16 +286,19 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 	// Rollover conditions  of timeStart and timeEnd are not handled
 	// Error if the range requested is beyond the existing range
 	assert(out.size() != 0);
-	if(start == 0)
-		start = timeStart;
-	if(start <  timeStart || (start + out.size()-1) > timeEnd)
-		return true;
-	else
+
+	// The block below is intended to clearly define the critical section
 	{
 		// ------ CRITICAL SECTION START -------
-	
-		pthread_mutex_lock(&mx);
+		lock_guard lck(&mx);
+		
+		if(start == 0)
+			start = timeStart;
+		if(start <  timeStart || (start + out.size()-1) > timeEnd)
+			return true;
 
+		// The code below is only performed if the timeStart and timeEnd
+		// were correct
 		size_t end = start + out.size() - 1;
 		size_t startPtr = (writePtr + N - (timeEnd - start) - 1 ) % N;  
 		size_t endPtr  = (writePtr + N - (timeEnd - end) - 1) % N;  
@@ -304,32 +308,33 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 		//std::cout << "End  " << end << '\n';
 		//std::cout << "StartPtr  " << startPtr << '\n';
 		//std::cout << "EndPtr  " << endPtr << '\n';
-	
-		pthread_mutex_unlock(&mx);
-	
+		
 		// ------ CRITICAL SECTION END -------
+	}	
 
-		assert(endPtr < N);
-		assert(startPtr < N);
+	// The following code is not in the critical section because it is
+	// assumed that we never read and write at the same location simultaneously
+	
+	assert(endPtr < N);
+	assert(startPtr < N);
 
-		if (endPtr >= startPtr)
-			std::copy(&storage[startPtr], &storage[endPtr + 1], out.begin());
-		else
-		{	
-			auto  it = std::copy(&storage[startPtr], &storage[N], out.begin());
-			//auto diff = std::distance(out.begin(),it);
-			//std::cout << "Distance " << diff << '\n';
-			//diff = std::distance(it,out.end());
-			//std::cout << "Distance to end" << diff << '\n';
-			//assert(it != out.end()); 
-			it = std::copy(&storage[0], &storage[endPtr+1], it);
-			//diff = std::distance(out.begin(),it);
-			//std::cout << "Distance " << diff << '\n';
-		}
-	
-	
-	return false;
+	if (endPtr >= startPtr)
+		std::copy(&storage[startPtr], &storage[endPtr + 1], out.begin());
+	else
+	{	
+		auto  it = std::copy(&storage[startPtr], &storage[N], out.begin());
+		//auto diff = std::distance(out.begin(),it);
+		//std::cout << "Distance " << diff << '\n';
+		//diff = std::distance(it,out.end());
+		//std::cout << "Distance to end" << diff << '\n';
+		//assert(it != out.end()); 
+		it = std::copy(&storage[0], &storage[endPtr+1], it);
+		//diff = std::distance(out.begin(),it);
+		//std::cout << "Distance " << diff << '\n';
 	}
+		
+	return false;
+	
 }
 
 /***********************************************************************//**
