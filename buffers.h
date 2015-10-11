@@ -22,6 +22,7 @@ This include specialized buffers like fifos or queues
 #include <iterator>
 #include <utility>
 #include "pthread.h"
+#include <iostream>
 
 namespace dsptl
 {
@@ -272,12 +273,12 @@ associated with the start timestamp. The number of values is indicated by
 the size of the vector passed as parameter.
 
  @param out vector in which the values retrieved will be stored
- @param start timestamp of the first value. If this value is zero, 
-the buffer is filled with the first value available and the value of
-start is updated approprietly
+ @param start timestamp of the first value. If this values is less than the
+ timeStart representing the first available sample in the buffer, it is adjusted
+ to timeStart and a warnning is isssued.
 
- @return true an error occurred (for example if the requested start is outside
- the available range), false if no error.
+ @return true an error occurred ( for example if the requested range goes beyond
+ the number of samples currently available in the buffer) , false if no error.
 
 *****************************************************************************/
 template <class T, size_t N>
@@ -297,11 +298,19 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 		// ------ CRITICAL SECTION START -------
 		lock_guard lck(&mx);
 		
-		if(start == 0)
+		if(start <  timeStart)
+		{
+			std::cerr << "******* REQUESTED START BEFORE FIRST AVAILABLE SAMPLE *****";
+			// The start is adjusted to the minimum value available
 			start = timeStart;
-		if(start <  timeStart || (start + out.size()-1) > timeEnd)
+			//return true;
+		}
+		if ((start + out.size()-1) > timeEnd)
+		{
 			return true;
+		}
 
+		//std::cerr << "K";
 		// The code below is only performed if the timeStart and timeEnd
 		// were correct
 		size_t end = start + out.size() - 1;
