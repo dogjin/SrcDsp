@@ -313,7 +313,7 @@ bool  FifoWithTimeTrack<T,N>::read(std::vector<T>& out, uint64_t & start )
 		//std::cerr << "K";
 		// The code below is only performed if the timeStart and timeEnd
 		// were correct
-		size_t end = start + out.size() - 1;
+		uint64_t end = start + out.size() - 1;
 		startPtr = (writePtr + N - (timeEnd - start) - 1 ) % N;  
 		endPtr  = (writePtr + N - (timeEnd - end) - 1) % N;  
 		//std::cout << "WritePtr " << writePtr << '\n';
