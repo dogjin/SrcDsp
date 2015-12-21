@@ -17,16 +17,18 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 
 	@tparam InType Data type of the input signal
 	@tparam OutType  Data type of the output signal
-	@tparam PhaseType Type of the phase
+	@tparam PhaseType Type of the phase (this has to be an integer type)
 	@tparam N Number of points for the sine table
 	
 	Upon construction, the frequency and the phase are initialized to zero
+	The mixer relies on the use of a lookup table. Consequently, the type of the
+	PhaseType must be an integral big enough to fit the value N.
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class PhaseType, unsigned N = 4096>
 	class _Mixer
 	{
 	public:
-		_Mixer():freq(), phi(), nominalFreq() {};
+		_Mixer(): phi(), freq(),nominalFreq() {};
 		void setFrequency(float loFreq);
 		void reset(float loFreq = 0);
 		void adjustFrequency(float loFreq = 0);
@@ -57,10 +59,10 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 			freq = static_cast<PhaseType>(round(N - round(-loFreq * N / 2)));
 			// For very small negative values of loFreq, freq becomes 4096
 			// We force it to the equivalent value of 0
-			if (freq == N) freq = 0;
+			if (freq == static_cast<PhaseType>(N)) freq = 0;
 		}
 
-		assert(freq >= 0 && freq < N);
+		assert(freq >= 0 && freq < static_cast<PhaseType>(N));
 	}
 
 	/***********************************************************************//**

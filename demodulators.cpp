@@ -32,7 +32,7 @@ namespace dsptl
 
 	------------------------------------------------------------------------------*/
 	DemodulatorOqpsk<int16_t>::DemodulatorOqpsk() :
-		twoPi(8192), onePi(4096), halfPi(2048), maxAmp(128)
+		 maxAmp(128), twoPi(8192), onePi(4096), halfPi(2048)
 	{
 		// Build the phase lookup table
 		int16_t phase;
@@ -40,8 +40,8 @@ namespace dsptl
 		for (int im = 0; im < maxAmp; ++im)
 			for (int re = 0; re < maxAmp; ++re)
 			{
-				auto tmp = atan2(im, re) * onePi / dsptl::pi;
-				auto tmp2 = round(atan2(im, re) * onePi / dsptl::pi);
+				//auto tmp = atan2(im, re) * onePi / dsptl::pi;
+				//auto tmp2 = round(atan2(im, re) * onePi / dsptl::pi);
 				phase = static_cast<int16_t>(round(atan2(im, re) * onePi / dsptl::pi));
 				phaseLUT[im * maxAmp + re] = phase;
 			}

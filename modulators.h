@@ -168,7 +168,6 @@ namespace dsptl
 		/// The bits vector can either consists of 0, 1 or -1, 1
 		void step(const std::vector<uint8_t> & bits , std::vector<std::complex<T> > & out)
 		{
-			const int N = 4;
 			assert(bits.size() == 2 * out.size());
 
 			// Bits are grouped 

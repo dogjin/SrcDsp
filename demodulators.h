@@ -58,7 +58,9 @@ namespace dsptl
 		std::vector<int8_t> step(std::vector<std::complex<int16_t>> in, int32_t & error);
 		void reset();
 		void setSyncPattern(std::vector<int8_t> bits){ bitSyncPattern = bits; };
-		/// Initial frequency of the loop in rad/samples
+		/// Initial frequency of the loop. The input parameter is  in rad/samples with a sampling
+		/// rate equal to the bit rate. It is converted to an integer increment value within the NCO phase lookup 
+		/// table
 		void setInitialFrequency(float f) { intialFreqEst = static_cast<int16_t>(round(f * onePi / dsptl::pi)); }
 		/// Initial phase of the loop in radians
 		void setInitialPhase(float p) { initialPhase = static_cast<int16_t>(round(p * onePi / dsptl::pi)); }

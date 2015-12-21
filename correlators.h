@@ -96,6 +96,7 @@ namespace dsptl
 	------------------------------------------------------------------------------*/
 	template<class InType, class CompType, size_t N, size_t S >
 	FixedPatternCorrelator<InType, CompType, N, S >::FixedPatternCorrelator()
+	:top(0)
 	{
 		bitSamples.assign(N, {});
 		reset();
@@ -230,11 +231,6 @@ namespace dsptl
 			fthreshold << sqrt(energyValue[0]) * 2.5 << '\n';
 			#endif
 
-			if (cntProcessedSamples == 417)
-			{
-				int i = 0;
-			}
-
 
 
 			// Is the middle point (index 1) a peak?
@@ -272,7 +268,7 @@ namespace dsptl
 				}
 			}
 
-			top = ++top % historySize;
+			top = (top + 1) % historySize;
 			
 
 		}

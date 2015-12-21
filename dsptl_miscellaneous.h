@@ -26,14 +26,18 @@ Estimate the frequency in radians per samples of a sequence of complex values\n
 
 The frequency is estimated by measuring the phase difference between samples 
 separated by L. As many phase differences as possible, based on the input
-buffer length are computed.
+buffer length are computed./n
+The algorithm implemented is only valid if the phase difference between two
+samples compared is always between -pi and +pi which is equivalent to say that
+the frequency of the input signal must be less than pi/L rad/samples
 
 @tparam InType The input vector shall contain complex<InType> values
 @tparam L Interval between samples used to compute a phase difference.
 
 @param in Input vector of complex values. The size of the vector must be at least L
 
-@return Frequency in radians per sample
+@return Frequency in radians per sample at the sampling frequency of the input
+data (sampling frequency of the in vector)
 
 ******************************************************************************/
 template<class InType, int L>
@@ -43,10 +47,14 @@ float estimateFreq(std::vector<std::complex<InType>> in)
 	int cnt = 0;
 	for (size_t index = 0; (index + L) < in.size(); index += L)
 	{
+		// Phase difference between the sample at index and the sample at index + L
+		// There are L intervals between these 2 samples
 		double tmpI, tmpQ;
 		tmpI = (in[index].real() * in[index + L].real() + in[index].imag() * in[index + L].imag());
 		tmpQ = (in[index].imag() * in[index + L].real() - in[index].real() * in[index + L].imag());
 		double phase = atan2(tmpQ, tmpI);
+	    // The phase difference are added and cnt contains the number of phase values
+		// which were accumulated.	
 		sumPhase += phase;
 		++cnt;
 	}
@@ -100,7 +108,7 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 	//We take the bits one by one and we pack them
 	auto it = in.cbegin();
 	uint8_t byte = 0;
-	int shift = 0;
+	unsigned shift = 0;
 	for (auto it = in.cbegin(); it != in.cend(); ++it)
 	{
 		if (firstBitIsMsbOfByte)
@@ -113,7 +121,7 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 			byte |= (*it > 0 ? 1 : 0) << shift;
 
 		}
-		shift = (++shift % bitsInByte);
+		shift = ((shift + 1) % bitsInByte);
 		if (shift == 0)
 		{
 			// A full byte has been collected
