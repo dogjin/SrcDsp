@@ -20,6 +20,8 @@ Class member function: functionMember
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <string>
+#include <sstream>
 #include <cassert>
 #include "dsp_complex.h"
 
@@ -52,6 +54,31 @@ namespace dsptl
 	template<class InType = int16_t, class CompType = int32_t, size_t N = 32, size_t S = 4 >
 	class FixedPatternCorrelator
 	{
+		/// Internal status of the correlator. This is mainly done in order to
+		/// have visibility in the correlator operation from the calling code
+		struct CorrState 
+		{
+			static const int Nelements = 3;
+			float InputEnergy;
+			uint32_t coeffsEnergy;
+			int coeffScaling;
+			uint32_t energyValue[Nelements] ;
+			uint32_t corrValue[Nelements] ;
+			double thresholdFactor;
+			std::string prettyString()
+			{	std::ostringstream os;
+				os << "Input Energy: " << InputEnergy << '\n';
+				os << "Coeffs Energy: " << coeffsEnergy << '\n';
+				os << "Coeff Scaling: " << coeffScaling << '\n';	
+				os << "Threshold Factor: " << thresholdFactor << '\n';
+				for(int index = 0; index < Nelements; ++index)
+					os << "Energy Value " << index << ": " << energyValue[index] << '\n';
+				for(int index = 0; index < Nelements; ++index)
+					os << "CorrValue " << index << ": " << corrValue[index] << '\n';
+
+				return os.str();
+			}
+		};
 
 
 	public:
@@ -60,20 +87,21 @@ namespace dsptl
 		void setPattern(const std::array<std::complex<CompType>, N > &in, double thresholdCoeff = 0.8 );
 		void reset();
 		std::vector<std::complex<InType>> getRefBitSamples();
-
+		CorrState getStatus(){return state;};
 
 	private:
 		std::array < std::complex<CompType>, N*S> history;
 		std::array < std::complex<CompType>, N > coeffs;
 		std::vector < std::complex<InType> > bitSamples;
 
-		uint32_t coeffsEnergy;
-		uint32_t corrValue[3] ;
-		uint32_t energyValue[3] ;
-		double thresholdFactor;
+		//uint32_t state.coeffsEnergy;
+		//uint32_t corrValue[3] ;
+		//uint32_t energyValue[3] ;
+		//double thresholdFactor;
 		size_t top;
-		int coeffScaling;
+		//int state.coeffScaling;
 		uint32_t cntProcessedSamples; // Number of samples processed until detection
+		CorrState state;
 
 		// Debugging routines
 		#ifdef CREATE_DEBUG_FILES
@@ -87,15 +115,12 @@ namespace dsptl
 
 
 	/*-----------------------------------------------------------------------------
-	Copy locally the array of correlation values
+	Constructor
 
-	@param[in] in Correlation pattern
-
-	The function also compute and stores the energy of the correlation signal
-
+	Internal variables are initialized. Files are created if necessary.
 	------------------------------------------------------------------------------*/
 	template<class InType, class CompType, size_t N, size_t S >
-	FixedPatternCorrelator<InType, CompType, N, S >::FixedPatternCorrelator()
+		FixedPatternCorrelator<InType, CompType, N, S >::FixedPatternCorrelator()
 	:top(0)
 	{
 		bitSamples.assign(N, {});
@@ -118,8 +143,8 @@ namespace dsptl
 	void FixedPatternCorrelator<InType, CompType, N, S >::reset()
 	{
 		top = 0;
-		corrValue[0] = corrValue[1] = corrValue[2] = 0;
-		energyValue[0] = energyValue[1] = energyValue[2] = 0;
+		state.corrValue[0] = state.corrValue[1] = state.corrValue[2] = 0;
+		state.energyValue[0] = state.energyValue[1] = state.energyValue[2] = 0;
 		for (size_t k = 0; k < history.size(); ++k)
 			history[k] = {};
 		for (size_t k = 0; k < bitSamples.size(); ++k)
@@ -151,7 +176,7 @@ namespace dsptl
 		}
 
 		// We compute the energy in the coefficients
-		coeffsEnergy = 0;
+		state.coeffsEnergy = 0;
 		double tmp = 0;
 		for (size_t index = 0; index < N; ++index)
 		{
@@ -159,10 +184,10 @@ namespace dsptl
 		}
 		assert(tmp <= 1073217600); // Each coeffs value must be less than 13 bits.
 
-		coeffsEnergy = static_cast<uint32_t>(tmp);
-		thresholdFactor = thresholdCoeff * sqrt(coeffsEnergy);
+		state.coeffsEnergy = static_cast<uint32_t>(tmp);
+		state.thresholdFactor = thresholdCoeff * sqrt(state.coeffsEnergy);
 
-		coeffScaling = static_cast<int>(floor(log2(sqrt(coeffsEnergy))));
+		state.coeffScaling = static_cast<int>(floor(log2(sqrt(state.coeffsEnergy))));
 
 
 
@@ -200,45 +225,45 @@ namespace dsptl
 			history[top] = in[index];
 			tmp = std::complex<CompType>{};
 
-			energyValue[2] = energyValue[1];
-			energyValue[1] = energyValue[0];
-			energyValue[0] = 0;
+			state.energyValue[2] = state.energyValue[1];
+			state.energyValue[1] = state.energyValue[0];
+			state.energyValue[0] = 0;
 
 			// We iterate with a stride S on the history buffer
 			for (k = 0; (hIndex = top - k*S) >=0 ; ++k)
 			{
 				tmp += history[hIndex] * coeffs[N-1-k];
-				energyValue[0] += history[hIndex].real() * history[hIndex].real() + history[hIndex].imag() *  history[hIndex].imag();
+				state.energyValue[0] += history[hIndex].real() * history[hIndex].real() + history[hIndex].imag() *  history[hIndex].imag();
 			}
 			for (k = 0; (hIndex = top + (k + 1 )*S) < historySize ; ++k)
 			{
 				tmp += history[hIndex] * coeffs[k];
-				energyValue[0] += history[hIndex].real() * history[hIndex].real() + history[hIndex].imag() *  history[hIndex].imag();
+				state.energyValue[0] += history[hIndex].real() * history[hIndex].real() + history[hIndex].imag() *  history[hIndex].imag();
 			}
 
-			tmp = scale32(tmp, coeffScaling);  // V2 dimension
-			energyValue[0] = energyValue[0] >> (coeffScaling/2);  // V2 dimension
+			tmp = scale32(tmp, state.coeffScaling);  // V2 dimension
+			state.energyValue[0] = state.energyValue[0] >> (state.coeffScaling/2);  // V2 dimension
 
 			// Store the squared magnitude of the correlation values
-			corrValue[2] = corrValue[1];
-			corrValue[1] = corrValue[0];
-			corrValue[0] = (tmp.real() >> 2)*(tmp.real()>>2) + (tmp.imag()>>2) * (tmp.imag()>>2);
+			state.corrValue[2] = state.corrValue[1];
+			state.corrValue[1] = state.corrValue[0];
+			state.corrValue[0] = (tmp.real() >> 2)*(tmp.real()>>2) + (tmp.imag()>>2) * (tmp.imag()>>2);
 
 			// DEBUG ONLY
 			#ifdef CREATE_DEBUG_FILES
-			fenergy << sqrt(energyValue[0]) << '\n';
-			fcorr << sqrt(corrValue[0]) << '\n';
-			fthreshold << sqrt(energyValue[0]) * 2.5 << '\n';
+			fenergy << sqrt(state.energyValue[0]) << '\n';
+			fcorr << sqrt(state.corrValue[0]) << '\n';
+			fthreshold << sqrt(state.energyValue[0]) * 2.5 << '\n';
 			#endif
 
 
 
 			// Is the middle point (index 1) a peak?
-			if (corrValue[1] > corrValue[2] && corrValue[1] > corrValue[0])
+			if (state.corrValue[1] > state.corrValue[2] && state.corrValue[1] > state.corrValue[0])
 			{
 				// Has the middle point (index 1) exceeded the threshold?
-				double corr = sqrt(corrValue[1]); // magnitude of the correlation
-				double energy = sqrt(energyValue[1]); // magnitude of the signal energy   
+				double corr = sqrt(state.corrValue[1]); // magnitude of the correlation
+				double energy = sqrt(state.energyValue[1]); // magnitude of the signal energy   
 				// Initial values before debugging were 2.5 and 200
 				if (corr > energy * 2.7 && energy > 300)
 				{
