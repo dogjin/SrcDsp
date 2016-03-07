@@ -44,7 +44,8 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 	/***********************************************************************//**
 	Sets the internal frequency of the mixer
 
-	@param loFreq Frequency of the local oscillator  in normalized frequency (-1 to 1)
+	@param loFreq Frequency of the local oscillator  in normalized frequency (-1 to 1).
+	The normalization frequency is 1/2 the sampling rate of the local oscillator
 
 	***************************************************************************/
 	template<class InType, class OutType, class PhaseType, unsigned N >
@@ -66,13 +67,17 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 	}
 
 	/***********************************************************************//**
-	Resets the state of the mixer. The frequency of the mixer is not affected
+	Resets the state of the mixer. 
+
+	@param loFreq New frequency setting of the mixer in normalized frequency.
+	The normalization frequency is 1/2 the sampling rate of the local oscillator
 
 	***************************************************************************/
 	template<class InType, class OutType, class PhaseType, unsigned N >
 	void _Mixer<InType, OutType, PhaseType, N>::reset(float loFreq)
 	{
 		phi = PhaseType{};
+		setFrequency(loFreq);
 	}
 
 	/***********************************************************************//**
@@ -80,6 +85,7 @@ namespace dsptl  // used to be dsptl_private but issue with gcc 453
 	done with continuous phase.\n
 
 	@param adjustFreq Value of the adjustment in normalized frequency (-1 to +1)
+	The normalization frequency is 1/2 the sampling rate of the local oscillator.
 
 	***************************************************************************/
 	template<class InType, class OutType, class PhaseType, unsigned N >

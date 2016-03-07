@@ -43,22 +43,18 @@ data (sampling frequency of the in vector)
 template<class InType, int L>
 float estimateFreq(std::vector<std::complex<InType>> in)
 {
-	double sumPhase = 0;
-	int cnt = 0;
-	for (size_t index = 0; (index + L) < in.size(); index += L)
+	double phase = 0;
+	double tmpI{}, tmpQ{};
+
+	for (size_t index = 0; (index + L) < in.size(); ++index )
 	{
-		// Phase difference between the sample at index and the sample at index + L
-		// There are L intervals between these 2 samples
-		double tmpI, tmpQ;
-		tmpI = (in[index].real() * in[index + L].real() + in[index].imag() * in[index + L].imag());
-		tmpQ = (in[index].imag() * in[index + L].real() - in[index].real() * in[index + L].imag());
-		double phase = atan2(tmpQ, tmpI);
-	    // The phase difference are added and cnt contains the number of phase values
-		// which were accumulated.	
-		sumPhase += phase;
-		++cnt;
+		// Correlation between one sample and the sample L samples after
+		tmpI += (in[index].real() * in[index + L].real() + in[index].imag() * in[index + L].imag());
+		tmpQ += (in[index].imag() * in[index + L].real() - in[index].real() * in[index + L].imag());
 	}
-	return static_cast<float>(sumPhase / (L * cnt));
+	
+	phase = atan2(tmpQ, tmpI);
+	return static_cast<float>(phase / L );
 }
 
 template<class InType, int Threshold>
