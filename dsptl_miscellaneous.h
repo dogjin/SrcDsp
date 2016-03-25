@@ -102,7 +102,6 @@ std::string bits2HexStr(std::vector<InType> in, bool firstBitIsMsbOfByte)
 
 
 	//We take the bits one by one and we pack them
-	auto it = in.cbegin();
 	uint8_t byte = 0;
 	unsigned shift = 0;
 	for (auto it = in.cbegin(); it != in.cend(); ++it)
