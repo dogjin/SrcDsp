@@ -219,7 +219,7 @@ void FifoWithTimeTrack<T,N>::write(std::vector<T> & in, unsigned int seconds, do
 /***********************************************************************//**
 Write the internal state of the fifo to the standard output
 
- @param data Flag indicating wherther the elements are dumped or not
+@param dumpData Flag indicating whether the elements are dumped or not
 
 ***************************************************************************/
 template <class T, size_t N>

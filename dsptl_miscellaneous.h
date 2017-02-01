@@ -79,8 +79,8 @@ If the bit pattern is not a multiple of 8 bits, addtional bits 0 are added on th
 and the number of added bit is indicated at the end of the string by -- # added bits
 
 
-@param bits      vector of the bits received
-@param order     Define how the bytes are created from the bits. If true, the first bit
+@param in      vector of the bits received
+@param firstBitIsMsbOfByte     Define how the bytes are created from the bits. If true, the first bit
 of the vector becomes the Most significant bit of the first byte. If false, this bit is the
 least significant bit of the first byte.
            

@@ -139,7 +139,8 @@ namespace dsptl
 	of the input buffer
 
 	@param signal Input to the filter
-	@param filteredSignal Output of the filter. Must be the same size as signal
+	@param filteredSignal Output of the filter. Must be L times the size of the input signal plus any space
+	required for flushing.
 	@param flush If true the history buffer is fully flushed in the output buffer
 
 	***************************************************************************/
