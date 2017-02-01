@@ -184,12 +184,10 @@ namespace dsptl
 					y += coeff[n] * buffer[k];
 				}
 
-
-
-				//filteredSignal[L*j + offset] = static_cast<OutType>(y);
-
-				//filteredSignal[L*j + offset] = limitScale16(y,  15 - leftShiftFactor);
-				filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
+				// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
+				// order to hangle the case where the types are not complex
+				//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
+				filteredSignal[L*j + offset] = limitScale<OutType,  InternalType>(y, 15 - leftShiftFactor);
 			}
 
 			top++;
@@ -222,7 +220,10 @@ namespace dsptl
 						y += coeff[n] * buffer[k];
 					}
 
-					filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
+					// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
+					// order to hangle the case where the types are not complex
+					//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
+					filteredSignal[L*j + offset] = limitScale<OutType, InternalType>(y, 15 - leftShiftFactor);
 				}
 
 				top++;

@@ -48,7 +48,7 @@ T limitScale(U z, unsigned shift)
 	static_assert(std::numeric_limits<U>::is_integer && std::numeric_limits<T>::is_integer, "");
 	// Verify that U has at least as many bits than T
 	static_assert(std::numeric_limits<U>::digits >= std::numeric_limits<T>::digits, "");
-	U a, b;
+	U a;
 
 	a = z >> shift;
 	// Limit the real part
