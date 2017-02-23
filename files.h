@@ -101,12 +101,12 @@ namespace dsptl
 	------------------------------------------------------------------------------*/
 	template<class Type, template<class> class Container>
 	void saveAsciiSamples(const Container<typename std::complex<Type> > & in, std::ofstream & os)
-	{/*
-		Container::const_iterator it;
+	{
+		typename Container<std::complex<Type>>::const_iterator it;
 		for (it = in.cbegin(); it != in.cend(); ++it)
 		{
 			os << *it.real() << '\n' << *it.imag() << '\n';
-		}*/
+		}
 	}
 
 

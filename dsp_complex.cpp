@@ -71,3 +71,4 @@ std::complex<int16_t> limitScale16(std::complex<int32_t> z, unsigned shift)
 		b = b > 0 ? INT16_MAX : -INT16_MAX;
 	return std::complex<int16_t>(a,b);
 }
+

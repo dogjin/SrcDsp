@@ -104,6 +104,50 @@ std::complex<T> limitScale(std::complex<U> z, unsigned shift)
 
 
 
+/**
+ * Multiply 2 complex numbers of int16_t then scale the output according to the
+ * right shift specified
+ *
+ * @param a : first operand
+ * @param b : second operand
+ * @param rightShift: Number of bit right shift to perform
+ *
+ * @return Product of the operand shifted by rightShift bits
+ */
+
+inline std::complex<int16_t> multiplyShift(std::complex<int16_t> a, std::complex<int16_t> b, int rightShift)
+{
+	// This assert verifies that usual arithmetic conversion is performed from int16 to at least int32
+	static_assert(sizeof(int) >= sizeof(int32_t),"");
+	int32_t re = real(a)* real(b) - imag(a) * imag(b);
+	int32_t im = imag(a) * real(b) + imag(b) * real(a);
+	re >>= rightShift;
+	im >>= rightShift;
+	return std::complex<int16_t>(static_cast<int16_t> (re), static_cast<int16_t> (im));
+}
+
+/**
+ * Multiply 1 complex numbers of int16_t by a real int16_t then scale the output according to the
+ * right shift specified
+ *
+ * @param a : first operand
+ * @param b : second operand
+ * @param rightShift: Number of bit right shift to perform
+ *
+ * @return Product of the operand shifted by rightShift bits
+ */
+
+inline std::complex<int16_t> multiplyShift(std::complex<int16_t> a, int16_t b, int rightShift)
+{
+	// This assert verifies that usual arithmetic conversion is performed from int16 to at least int32
+	static_assert(sizeof(int) >= sizeof(int32_t),"");
+	int32_t re = real(a) * b;
+	int32_t im = imag(a) * b ;
+	re >>= rightShift;
+	im >>= rightShift;
+	return std::complex<int16_t>(static_cast<int16_t> (re), static_cast<int16_t> (im));
+}
+
 
 
 #if 0
