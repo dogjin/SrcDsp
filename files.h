@@ -1,13 +1,7 @@
 /*-----------------------------------------------------------------------------
 @file
 
-Definition of all DSP routines which allow file storage of samples
-in specific format
-The naming conventions are as follows:
-Class names: ClassName
-Class member data : dataMember
-Class member function: functionMember
-
+This file version is obsolete and should be replaced by dsptl_files.h
 
 
 ------------------------------------------------------------------------------*/
