@@ -232,7 +232,92 @@ namespace dsptl
 		}
 
 	}
+	
+	/**
+	Version of the step function which takes an iterator as location of the output signal
+	*/
+	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
+	void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const std::vector<InType> & signal, typename std::vector<OutType>::iterator  filteredSignal, bool flush)
+	{
+		assert(!coeff.empty());
 
+		InternalType y;  				// Output result
+		unsigned  n;				// Counting indexes
+		size_t histSize = buffer.size();	// Number of taps in the filter
+		size_t inputSize = signal.size();	// Number of input samples
+
+
+		for (unsigned j = 0; j < inputSize; j++)
+		{
+			// This loop is executed for each of the input samples
+			buffer[top] = signal[j];
+			n = 0;
+
+			// For each input sample, we compute L output samples
+			for (size_t offset = 0; offset < L; ++offset)
+			{
+				n = offset;
+				y = InternalType();
+
+				// Process samples before and including Top
+				for (int k = top; k >= 0; k--, n += L)
+				{
+					y += coeff[n] * buffer[k];
+				}
+				// Process samples after Top
+				for (unsigned k = histSize - 1; k > top; k--, n += L)
+				{
+					y += coeff[n] * buffer[k];
+				}
+
+				// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
+				// order to hangle the case where the types are not complex
+				//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
+				filteredSignal[L*j + offset] = limitScale<OutType,  InternalType>(y, 0);
+			}
+
+			top++;
+			if (top >= histSize) top = 0;
+		}
+
+		if (flush)
+		{
+			// We flush with length / L zeros
+			for (unsigned j = inputSize; j < (inputSize + length / L); j++)
+			{
+				// This loop is executed for each of the input samples
+				buffer[top] = InType{};
+				n = 0;
+
+				// For each input sample, we compute L output samples
+				for (size_t offset = 0; offset < L; ++offset)
+				{
+					n = offset;
+					y = InternalType();
+
+					// Process samples before and including Top
+					for (int k = top; k >= 0; k--, n += L)
+					{
+						y += coeff[n] * buffer[k];
+					}
+					// Process samples after Top
+					for (unsigned k = histSize - 1; k > top; k--, n += L)
+					{
+						y += coeff[n] * buffer[k];
+					}
+
+					// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
+					// order to hangle the case where the types are not complex
+					//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
+					filteredSignal[L*j + offset] = limitScale<OutType, InternalType>(y, 15 - leftShiftFactor);
+				}
+
+				top++;
+				if (top >= histSize) top = 0;
+			}
+		}
+
+	}
 } // End of namespace
 
 #endif
