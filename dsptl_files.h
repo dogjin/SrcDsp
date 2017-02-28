@@ -40,6 +40,7 @@ namespace dsptl
 		{
 			os.write(reinterpret_cast<char *>(&e), sizeof(Type));
 		}
+		os.flush();
 	}
 
 	/**
@@ -56,6 +57,7 @@ namespace dsptl
 	{
 		// We use the fact that the vector has a contiguous memory storage
 		os.write(reinterpret_cast<char *>(in.data()), in.size() * sizeof(Type));
+		os.flush();
 	}
 
 	
@@ -81,6 +83,7 @@ namespace dsptl
 		{
 			os.write(reinterpret_cast<char *>(&e), sizeof(std::complex<Type>));
 		}
+		os.flush();
 	}
 
 	/**
@@ -100,6 +103,7 @@ namespace dsptl
 		// complex<Type> are stored in contiguous memory
 		static_assert(sizeof(std::complex<Type>) == 2*sizeof(Type), "");
 		os.write(reinterpret_cast<char *>(in.data()), in.size() * sizeof(std::complex<Type>));
+		os.flush();
 	}
 
 
@@ -117,12 +121,13 @@ namespace dsptl
 	template<class Type,class Allocator, template<class,class> class Container>
 	void saveAsciiSamples(const Container<Type, Allocator> & in, std::ofstream & os)
 	{
-		os << "Non complex templated version "<< '\n';
+		//os << "Non complex templated version "<< '\n';
 		typename Container<Type, Allocator>::const_iterator it;
 		for (it = in.cbegin(); it != in.cend(); ++it)
 		{
 			os << *it << '\n';
 		}
+		os.flush();
 	}
 
 	/**
@@ -137,13 +142,14 @@ namespace dsptl
 	*/
 	void saveAsciiSamples(const std::vector<int8_t> & in, std::ofstream & os)
 	{
-		os << "std::vector<int8_t> version \n";
+		//os << "std::vector<int8_t> version \n";
 		std::vector<int8_t>::const_iterator it;
 		for (it = in.cbegin(); it != in.cend(); ++it)
 		{
 			// Forces the interpretation as a number not as a character
 			os << static_cast<int>(*it) << '\n';
 		}
+		os.flush();
 	}
 
 	/**
@@ -155,13 +161,14 @@ namespace dsptl
 	*/
 	void saveAsciiSamples(const std::vector<uint8_t> & in, std::ofstream & os)
 	{
-		os << "std::vector<uint8_t> version \n";
+		//os << "std::vector<uint8_t> version \n";
 		std::vector<uint8_t>::const_iterator it;
 		for (it = in.cbegin(); it != in.cend(); ++it)
 		{
 			// Forces the interpretation as a number not as a character
 			os << static_cast<unsigned>(*it) << '\n';
 		}
+		os.flush();
 	}
 
 
@@ -178,12 +185,13 @@ namespace dsptl
 	template< class Type, class Allocator, template<class, class> class Container>
 	void saveAsciiSamples(const Container<typename std::complex<Type>,Allocator > & in, std::ofstream & os)
 	{
-		os << "Complex templated version \n";
+		//os << "Complex templated version \n";
 		typename Container<std::complex<Type>, Allocator>::const_iterator it;
 		for (it = in.cbegin(); it != in.cend(); ++it)
 		{
 			os << it->real() << '\n' << it->imag() << '\n';
 		}
+		os.flush();
 	}
 
 	/**
@@ -195,13 +203,14 @@ namespace dsptl
 	*/
 	void saveAsciiSamples(const std::vector<std::complex<int8_t> > & in, std::ofstream & os)
 	{
-		os << "std::vector<complex<int8_t>> version\n";
+		//os << "std::vector<complex<int8_t>> version\n";
 		std::vector<std::complex<int8_t> >::const_iterator it;
 		for (it = in.cbegin(); it != in.cend(); ++it)
 		{
 			// Forces the interpretation as a number not as a character
 			os << static_cast<int>(it->real()) << '\n' << static_cast<int>(it->imag()) << '\n';
 		}
+		os.flush();
 	}
 	
 } // End of namespace
