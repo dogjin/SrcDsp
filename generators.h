@@ -108,6 +108,38 @@ namespace dsptl
 
 
 
+	/*-----------------------------------------------------------------------------
+	Create a table of cosine values. The values correspond to one quadrant of the
+	full circle. The length of the quadrant is indicated by the length template argument.
+	This function is intended to be a constexpr function
+
+	@tparam OutType Type of the output signal
+	@tparam length  Number of points in the quadrant
+
+	@param amplitude Peak amplitude of the waveform
+
+	The computation are done internally as double and converted to the desired type
+	with the desired amplitude\n.
+   In order to support floating point no rounding is done, only a static cast to the 
+	desired type is perfomed.   
+
+	------------------------------------------------------------------------------*/
+	template<typename Type, size_t length>
+		std::array<Type,length> makeCosTable(Type amplitude)
+		{
+			const int QS = length;
+			std::array<Type, QS> cosTable;
+			int phase = 0;
+			for(auto &e:cosTable)
+			{
+				e = static_cast<Type>(lround(amplitude * cos(phase * 2 * dsptl::pi / (4 * QS))));
+				phase ++;
+			}
+			return cosTable;
+		}
+
+
+
 } // End of namespace
 
 #endif
