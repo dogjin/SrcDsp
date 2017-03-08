@@ -118,6 +118,28 @@ namespace dsptl
 	@param in Container to be iterated to write the values in a file
 	@param os Stream to use to write the  output	
 	*/
+	template< class Container>
+	void saveAsciiSamples(const Container & in, std::ofstream &os)
+	{
+		//os << "Non complex templated version "<< '\n';
+		typename Container::const_iterator it;
+		for (it = in.cbegin(); it != in.cend(); ++it)
+		{
+			os << *it << '\n';
+		}
+		os.flush();
+	}
+
+	/**
+	Saves a container of real data in a file. Each data point is formatted
+    ASCII and is on its own line.	
+
+    @tparam Type Value type of the container. Must be a numeric type
+    @tparam Container Container type
+
+	@param in Container to be iterated to write the values in a file
+	@param os Stream to use to write the  output	
+	*/
 	template<class Type,class Allocator, template<class,class> class Container>
 	void saveAsciiSamples(const Container<Type, Allocator> & in, std::ofstream & os)
 	{
