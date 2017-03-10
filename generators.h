@@ -17,6 +17,7 @@ Class member function: functionMember
 #include <cassert>
 #include <vector>
 #include <complex>
+#include <array>
 #include <cmath>
 #include "constants.h"
 

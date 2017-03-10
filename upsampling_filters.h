@@ -244,7 +244,7 @@ namespace dsptl
 	void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const std::vector<InType> & signal, typename std::vector<OutType>::iterator  filteredSignal, bool flush)
 	{
 		assert(!coeff.empty());
-		int ShiftFactor = 0; // This will need to be modified in order to accomodate the behavior of the version
+		int shiftFactor = 0; // This will need to be modified in order to accomodate the behavior of the version
 		// of the step function which takes a vector as input.
 
 		InternalType y;  				// Output result
@@ -276,7 +276,7 @@ namespace dsptl
 					y += coeff[n] * buffer[k];
 				}
 
-				// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
+				// The following line has been replaced synchronzusly with the addtion of an overload of the function limitScale in 
 				// order to hangle the case where the types are not complex
 				//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
 				filteredSignal[L*j + offset] = limitScale<OutType,  InternalType>(y, shiftFactor);
