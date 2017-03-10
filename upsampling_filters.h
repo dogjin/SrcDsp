@@ -44,6 +44,8 @@ namespace dsptl
 		void setCoefficients(const std::vector<CoefType> &firCoeff);
 		// This function is called for each iteration of the filtering process
 		void step(const std::vector<InType> & signal, std::vector<OutType> & filteredSignal, bool flush = false);
+		// Version of step with an iterator as destination
+		void step(const std::vector<InType> & signal, typename std::vector<OutType>::iterator  filteredSignal, bool flush = false);
 		/// Reset the internal counters and buffers
 		void reset()
 		{
@@ -235,11 +237,15 @@ namespace dsptl
 	
 	/**
 	Version of the step function which takes an iterator as location of the output signal
+	@TODO Modify the function which takes a vector reference as input so that it calls this one. It will
+	require to modify the handling of the shift factor
 	*/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
 	void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const std::vector<InType> & signal, typename std::vector<OutType>::iterator  filteredSignal, bool flush)
 	{
 		assert(!coeff.empty());
+		int ShiftFactor = 0; // This will need to be modified in order to accomodate the behavior of the version
+		// of the step function which takes a vector as input.
 
 		InternalType y;  				// Output result
 		unsigned  n;				// Counting indexes
@@ -273,7 +279,7 @@ namespace dsptl
 				// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
 				// order to hangle the case where the types are not complex
 				//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
-				filteredSignal[L*j + offset] = limitScale<OutType,  InternalType>(y, 0);
+				filteredSignal[L*j + offset] = limitScale<OutType,  InternalType>(y, shiftFactor);
 			}
 
 			top++;
@@ -309,7 +315,7 @@ namespace dsptl
 					// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
 					// order to hangle the case where the types are not complex
 					//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
-					filteredSignal[L*j + offset] = limitScale<OutType, InternalType>(y, 15 - leftShiftFactor);
+					filteredSignal[L*j + offset] = limitScale<OutType, InternalType>(y, shiftFactor);
 				}
 
 				top++;
