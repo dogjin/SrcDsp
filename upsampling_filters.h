@@ -149,12 +149,9 @@ namespace dsptl
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned L>
 	void FilterUpsamplingFir<InType, OutType, InternalType, CoefType, L>::step(const std::vector<InType> & signal, std::vector<OutType> & filteredSignal, bool flush)
 	{
-#ifdef CPLUSPLUS11
-		static_assert(signal.size() * L == filteredSignal.size(), "");
-#else
 		if (!flush)
 			assert(signal.size() * L == filteredSignal.size());
-#endif
+
 		assert(!coeff.empty());
 
 		InternalType y;  				// Output result
@@ -189,7 +186,7 @@ namespace dsptl
 				// The following line has been replaced synchronously with the addtion of an overload of the function limitScale in 
 				// order to hangle the case where the types are not complex
 				//filteredSignal[L*j + offset] = limitScale<typename OutType::value_type, typename InternalType::value_type>(y, 15 - leftShiftFactor);
-				filteredSignal[L*j + offset] = limitScale<OutType,  InternalType>(y, 15 - leftShiftFactor);
+				filteredSignal[L*j + offset] = limitScale<OutType>(y, 15 - leftShiftFactor);
 			}
 
 			top++;
