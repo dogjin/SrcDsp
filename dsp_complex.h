@@ -42,7 +42,7 @@ param z Value to scale and limit
 
 
 *******************************************************************************/
-template <class T, class U, class  = typename  std::enable_if<std::numeric_limits<T>::is_integer,void>::type>
+template <class T, class U, typename  std::enable_if<std::numeric_limits<T>::is_integer,int>::type * = nullptr>
 T limitScale(U z, unsigned shift)
 {
 	// Verify that we are working with complex of integers value.
@@ -73,21 +73,21 @@ integer (ie they are complex)
 This routine is only applicable when both the input and output complex types are
 integers.
 
-tparam T The input complex is of type complex<T> (T is not deducible)
-tparam U The output complex is of type complex<U>
+tparam T The input complex type (T is not deducible)
+tparam U The output complex type 
 
 param z Value to scale and limit
 
 
 *******************************************************************************/
-template <class T, class U, class =  typename std::enable_if<!std::numeric_limits<T>::is_integer, void>::type>
+template <class T, class U, typename std::enable_if<!std::numeric_limits<T>::is_integer, int>::type* = nullptr>
 T limitScale(U z, unsigned shift)
 {
 	// Verify that we are working with complex of integers value.
 	static_assert(std::numeric_limits<typename U::value_type>::is_integer && std::numeric_limits<typename T::value_type>::is_integer, "");
 	// Verify that U has at least as many bits than T
 	static_assert(std::numeric_limits<typename U::value_type>::digits >= std::numeric_limits<typename T::value_type>::digits, "");
-	U a, b;
+	typename U::value_type a, b;
 
 	a = z.real() >> shift;
 	// Limit the real part
