@@ -40,6 +40,10 @@ namespace dsptl
 	with the desired amplitude\n
 	The class has a specialization for the complex output type
 
+	Usage
+	@arg create an object of the class
+	@arg call the step function with a reference to the vector to be filled with the sinewave
+
 	------------------------------------------------------------------------------*/
 	template<class OutType>
 	class GenSine

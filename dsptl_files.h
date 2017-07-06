@@ -15,6 +15,7 @@ in specific format
 #include <vector>
 #include <complex>
 #include <fstream>
+#include <iterator>
 
 
 
@@ -235,6 +236,26 @@ namespace dsptl
 		os.flush();
 	}
 	
+	/**
+	Read an input stream and store the result in a vector of complex. The destination container
+	will be emptied before it is filled by the content of the stream.
+
+    @tparam Type Value type of each complex element of the vector. Must be a non-complex numeric type
+
+	@param is Stream used for input
+	@param out Container in which the data read from files should be stored
+	*/
+	template<class Type >
+	void readBinarySamples( std::ifstream & is, std::vector<std::complex<Type>> & out)
+	{
+		// clear the output vector
+		out.empty();
+		// We use the fact that the vector has a contiguous memory storage and the assumption that
+		// complex<Type> are stored in contiguous memory
+		static_assert(sizeof(std::complex<Type>) == 2*sizeof(Type), "");
+		out.assign(std::istream_iterator<std::complex<Type>>(is), std::istream_iterator<std::complex<Type>>());
+	}
+
 } // End of namespace
 
 #endif
