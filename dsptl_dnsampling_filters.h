@@ -1,8 +1,6 @@
 /*-----------------------------------------------------------------------------
 @file 
 
-******* WARNING: This file is obsolete and is superseded by dsptl_dnsampling_filters.h  *****
-
 Definition of all DSP routines related to mutlirate filters
 performing a downconversion
 
@@ -49,6 +47,7 @@ namespace dsptl
 	public:
 		/// Constructor. Coefficients are defined. Size for the internal
 		/// buffer is reserved based on the number of coefficients
+		FilterDnsamplingFir();
 		FilterDnsamplingFir(const std::vector<CoefType> &firCoeff);
 		// This function is called for each iteration of the filtering process
 		void step(const std::vector<InType> & input, std::vector<OutType> & filteredSignal);
@@ -58,6 +57,7 @@ namespace dsptl
 			for (size_t index = 0; index < history.size(); ++index)
 				history[index] = InType();
 		}
+		void setCoeffs(const std::vector<CoefType>&);
 		/// Set the gain of the upsampler in terms of left shift. The default gain is 
 		/// about 0 dB
 		void setLeftShiftBy2(int leftShiftBy2) {leftShift = leftShiftBy2;}
@@ -73,7 +73,38 @@ namespace dsptl
 	/*-----------------------------------------------------------------------------
 	Upsampling FIR Filter Constructor
 
+	This is the default constructor which create an object which is not initialized.
+	For example the filter coefficients are not setup. They van be setup by calling 
+	setCoeffs()
+
+	------------------------------------------------------------------------------*/
+	template<class InType, class OutType, class InternalType, class CoefType, unsigned M>
+	FilterDnsamplingFir<InType, OutType, InternalType, CoefType, M>::FilterDnsamplingFir()
+	{};
+	
+	/*-----------------------------------------------------------------------------
+	Upsampling FIR Filter Constructor
+
 	The constructor initializes the internal coefficient table and creates the internal
+	buffer to maintain history from one call to the other.\n
+	There are no constraints on the number of coefficients
+
+	------------------------------------------------------------------------------*/
+	template<class InType, class OutType, class InternalType, class CoefType, unsigned M>
+	FilterDnsamplingFir<InType, OutType, InternalType, CoefType, M>::FilterDnsamplingFir
+	(
+		const std::vector<CoefType> &firCoeff ///< Vector of real coefficients
+	)
+	{
+		setCoeffs(firCoeff);
+
+	}
+
+
+	/*-----------------------------------------------------------------------------
+	Sets the coeffficients of the filter.
+
+	The function initializes the internal coefficient table and creates the internal
 	buffer to maintain history from one call to the other.\n
 	There are no constraints on the number of coefficients
 
@@ -81,9 +112,15 @@ namespace dsptl
 
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned M>
-	FilterDnsamplingFir<InType, OutType, InternalType, CoefType, M>::FilterDnsamplingFir(const std::vector<CoefType> &firCoeff)
-			: coeff(firCoeff)
+	void FilterDnsamplingFir<InType, OutType, InternalType, CoefType, M>::setCoeffs
+	(
+		const std::vector<CoefType> &firCoeff ///< vector of real coefficients
+	)
 	{
+		// The number of coefficients msut always be a multiple of the 
+		// decimation ratio
+		assert(firCoeff.size() % M == 0);
+		coeff.assign(firCoeff.begin(),firCoeff.end());
 
 		// The internal history buffer is sized according to the 
 		// number of coefficients
@@ -95,8 +132,6 @@ namespace dsptl
 		coeffScaling = static_cast<int>(floor(log2(sumMagnitude)));
 		leftShift = 0;
 	}
-
-
 
 	/*-----------------------------------------------------------------------------
 	Downsampling FIR Filter
@@ -120,13 +155,26 @@ namespace dsptl
 	the size of the output buffer is 1/M times the size of the input buffer.\n
 	The output is always scaled to maintain a gain of between 0 and 6dB
 
+	@tparam InType Type of the input of the filter. If the input is complex, it must be
+	specified as std::complex<...>
+	@tparam OutType Type of the output of the filter. If  The output is complex, it must be specified as 
+	std::complex<>
+	@tparam InternalType Type used internally for the computation. If the type is complex, it
+	must be specified as std::complex<...>
+	@tparam CoefType Type fo the coefficients. The coefficients are assumed to be real (not complex)
+	@tparam N Decimation ratio that the filter will implement
+
 	@param input Input to the filter
 	@param filteredSignal Output of the filter. Must be the same size as signal
 
 
 	------------------------------------------------------------------------------*/
 	template<class InType, class OutType, class InternalType, class CoefType, unsigned M>
-	void FilterDnsamplingFir<InType, OutType, InternalType, CoefType, M>::step(const std::vector<InType> & input, std::vector<OutType> & filteredSignal)
+	void FilterDnsamplingFir<InType, OutType, InternalType, CoefType, M>::step
+	(
+		const std::vector<InType> & input, 
+		std::vector<OutType> & filteredSignal
+	)
 	{
 
 		// There should be M times more samples at the input than the output

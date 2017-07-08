@@ -19,6 +19,7 @@ Class member function: functionMember
 #include <complex>
 #include <array>
 #include <cmath>
+#include <iostream>
 #include "constants.h"
 
 // Uncomment the following line to include the C++ specific syntax
@@ -61,7 +62,10 @@ namespace dsptl
 			for (unsigned i = 0; i < out.size(); ++i)
 			{
 				phase += freq;
+				// Limit the phase between 0 and 2pi
 				if (phase >= 2 * pi) phase -= 2 * pi;
+				if (phase < 0 ) phase += 2* pi;
+				// Compute the sample for this phase
 				out[i] = static_cast<OutType>(cos(phase) * ampl);
 			}
 
@@ -87,6 +91,7 @@ namespace dsptl
 		{
 			phase = 0;
 			freq = frequency * pi;
+			std::cout << "Frequency" << freq << "rad/samples\n";
 		}
 		// Generate a number of samples equal to the size of the buffer given
 		void step(std::vector<std::complex<OutType> >& out)
@@ -94,7 +99,10 @@ namespace dsptl
 			for (unsigned i = 0; i < out.size(); ++i)
 			{
 				phase += freq;
-				if (phase >= 2 * pi) phase -= 2 * pi;
+				// We maintain the phase between 0 and 2pi
+				if (phase >= 2* pi) phase -= 2 * pi;
+				if (phase < 0 ) phase += 2*pi;
+				// Compute the sample for this phase value
 				out[i] = std::complex<OutType>(static_cast<OutType>(cos(phase) * ampl), static_cast<OutType>(sin(phase) * ampl));
 			}
 
