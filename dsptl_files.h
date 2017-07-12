@@ -17,7 +17,8 @@ in specific format
 #include <fstream>
 #include <iterator>
 
-
+// Temporaty , to be removed
+#include <iostream>
 
 namespace dsptl
 {
@@ -238,7 +239,8 @@ namespace dsptl
 	
 	/**
 	Read an input stream and store the result in a vector of complex. The destination container
-	will be emptied before it is filled by the content of the stream.
+	will be emptied before it is filled by the content of the stream. The stream contains unformatted
+	interleaved I and Q data where each component is a 'Type'
 
     @tparam Type Value type of each complex element of the vector. Must be a non-complex numeric type
 
@@ -250,10 +252,13 @@ namespace dsptl
 	{
 		// clear the output vector
 		out.empty();
-		// We use the fact that the vector has a contiguous memory storage and the assumption that
-		// complex<Type> are stored in contiguous memory
-		static_assert(sizeof(std::complex<Type>) == 2*sizeof(Type), "");
-		out.assign(std::istream_iterator<std::complex<Type>>(is), std::istream_iterator<std::complex<Type>>());
+		while(is)
+		{
+			Type i,q;
+			is.read(reinterpret_cast<char*>(&i),sizeof(Type));
+			is.read(reinterpret_cast<char*>(&q),sizeof(Type));
+			out.push_back(std::complex<Type>(i,q));
+		}
 	}
 
 } // End of namespace
