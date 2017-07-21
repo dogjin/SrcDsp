@@ -19,7 +19,6 @@ Class member function: functionMember
 #include <complex>
 #include <array>
 #include <cmath>
-#include <iostream>
 #include "constants.h"
 
 // Uncomment the following line to include the C++ specific syntax
@@ -91,7 +90,6 @@ namespace dsptl
 		{
 			phase = 0;
 			freq = frequency * pi;
-			std::cout << "Frequency" << freq << "rad/samples\n";
 		}
 		// Generate a number of samples equal to the size of the buffer given
 		void step(std::vector<std::complex<OutType> >& out)
